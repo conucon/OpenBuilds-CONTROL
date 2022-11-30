@@ -723,7 +723,7 @@ $(document).ready(function() {
       fileName: ""
     });
   });
-
+  $('#mmMode').text("mm");
 });
 
 function changeStepSize(dir) {
