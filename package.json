@@ -17,6 +17,7 @@
     "directory-tree": "^2.2.4",
     "drivelist": "^9.2.4",
     "electron-builder-notarize": "^1.2.0",
+    "electron-i18n": "^1.3136.0",
     "electron-updater": "^5.0.5",
     "evilscan": "^1.9.1",
     "express": "^4.17.1",
