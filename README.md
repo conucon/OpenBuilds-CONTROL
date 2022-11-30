@@ -17,8 +17,10 @@ Click to see all past releases:  [![Downloads](https://img.shields.io/github/dow
 ![Screenshot](https://raw.githubusercontent.com/OpenBuilds/OpenBuilds-CONTROL/master/docs/control.PNG)
 
 # Build:
+```
 npm install
 npm install -g electron-builder
 npm install -g electron-builder-notarize
 npm install -g builder-util
 electron-builder --win --x64
+```
