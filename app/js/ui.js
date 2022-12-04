@@ -1,8 +1,9 @@
+
 // Toolbar with USB port/connect/disconnect
 function setConnectBar(val, status) {
   if (val == 0) { // Not Connected Yet
     // Status Badge
-    $('#connectStatus').html("Port: Not Connected");
+    $('#connectStatus').html(tr["portConnected"]);
     // Connect/Disconnect Button
     $("#disconnectBtn").hide();
     $("#flashBtn").hide();
@@ -23,7 +24,7 @@ function setConnectBar(val, status) {
 
   } else if (val == 1 || val == 2) { // Connected, but not Playing yet
     // Status Badge
-    $('#connectStatus').html("Port: Connected");
+    $('#connectStatus').html(tr["portConnected"]);
     // Connect/Disconnect Button
     $("#connectBtn").hide();
     $("#driverBtn").hide();
@@ -43,7 +44,7 @@ function setConnectBar(val, status) {
 
   } else if (val == 3) { // Busy Streaming GCODE
     // Status Badge
-    $('#connectStatus').html("Port: Connected");
+    $('#connectStatus').html(tr["portConnected"]);
     // Connect/Disconnect Button
     $("#connectBtn").hide();
     $("#driverBtn").hide();
@@ -62,7 +63,7 @@ function setConnectBar(val, status) {
 
   } else if (val == 4) { // Paused
     // Status Badge
-    $('#connectStatus').html("Port: Connected");
+    $('#connectStatus').html(tr["portConnected"]);
     // Connect/Disconnect Button
     $("#connectBtn").hide();
     $("#driverBtn").hide();
@@ -81,7 +82,7 @@ function setConnectBar(val, status) {
 
   } else if (val == 5) { // Alarm State
     // Status Badge
-    $('#connectStatus').html("Port: Connected");
+    $('#connectStatus').html(tr["portConnected"]);
     // Connect/Disconnect Button
     $("#connectBtn").hide();
     $("#driverBtn").hide();
