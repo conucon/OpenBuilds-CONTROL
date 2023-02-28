@@ -18,9 +18,7 @@ Click to see all past releases:  [![Downloads](https://img.shields.io/github/dow
 
 # Build:
 ```
-npm install
-npm install -g electron-builder
-npm install -g electron-builder-notarize
-npm install -g builder-util
-electron-builder --win --x64
+npm i
+npm run start   // starts electron
+npm run build   // creates exe
 ```
