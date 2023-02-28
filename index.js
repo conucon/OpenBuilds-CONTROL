@@ -43,7 +43,7 @@ var fs = require('fs');
 var path = require("path");
 const join = require('path').join;
 var mkdirp = require('mkdirp');
-const drivelist = require('drivelist');
+//const drivelist = require('drivelist');
 require('hazardous');
 
 
@@ -100,9 +100,8 @@ io.attach(httpsserver);
 const grblStrings = require("./grblStrings.js");
 
 // Serial
-const serialport = require('serialport');
-var SerialPort = serialport;
-const Readline = SerialPort.parsers.Readline;
+const { SerialPort } = require('serialport');
+const { ReadlineParser } = require('@serialport/parser-readline')
 
 // telnet
 const net = require('net');
@@ -443,15 +442,16 @@ var status = {
 
 
 async function findPorts() {
-  const ports = await SerialPort.list()
-  // console.log(ports)
-  oldportslist = ports;
-  status.comms.interfaces.ports = ports;
+  await SerialPort.list().then((ports, err) => {
+    console.log(ports)
+    oldportslist = ports;
+    status.comms.interfaces.ports = ports;
+  })  
 }
 findPorts()
 
 async function findChangedPorts() {
-  const ports = await SerialPort.list()
+  /*const ports = await SerialPort.list()
   // console.log(ports)
   status.comms.interfaces.ports = ports;
   if (!_.isEqual(ports, oldportslist)) {
@@ -466,12 +466,12 @@ async function findChangedPorts() {
   }
   oldportslist = ports;
   // throw new Error('No ports found')
-  findPorts()
+  findPorts()*/
 }
 
 async function findDisks() {
-  const drives = await drivelist.list();
-  status.interface.diskdrives = drives;
+  //const drives = await drivelist.list();
+  //status.interface.diskdrives = drives;
 }
 
 var PortCheckinterval = setInterval(function() {
@@ -939,8 +939,9 @@ io.on("connection", function(socket) {
 
       if (data.type == "usb") {
         console.log("connect", "Connecting to " + data.port + " via " + data.type);
-        port = new SerialPort(data.port, {
+        port = new SerialPort({path: data.port,
           baudRate: parseInt(data.baud),
+          parser: new ReadlineParser("\n"),
           hupcl: false // Don't set DTR - useful for X32 Reset
         });
       } else if (data.type == "telnet") {
@@ -951,9 +952,9 @@ io.on("connection", function(socket) {
 
 
 
-      parser = port.pipe(new Readline({
+      /*parser = port.pipe(new Readline({
         delimiter: '\r\n'
-      }));
+      }));*/
 
       // port.on("data", function(data) {
       //   console.log(data)
@@ -1135,7 +1136,7 @@ io.on("connection", function(socket) {
         }
       }
 
-      parser.on("data", function(data) {
+      port.on("data", function(data) {
         //console.log(data)
         var command = sentBuffer[0];
 

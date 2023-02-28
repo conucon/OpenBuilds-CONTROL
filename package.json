@@ -5,35 +5,22 @@
   "description": "OpenBuildsCONTROL CNC Machine Host Software",
   "author": "github.com/openbuilds <support@openbuilds.com>",
   "devDependencies": {
-    "copyfiles": "^2.3.0",
-    "electron": "^9.2.0",
-    "electron-builder": "^22.14.13",
-    "electron-rebuild": "^3.2.7",
-    "ncp": "^2.0.0"
+    "copyfiles": "^2.4.1",
+    "electron": "^17.0.0"
   },
   "dependencies": {
-    "avrgirl-arduino": "^4.2.3",
-    "detect-rpi": "^1.4.0",
-    "directory-tree": "^2.2.4",
-    "drivelist": "^9.2.4",
-    "electron-builder-notarize": "^1.2.0",
-    "electron-i18n": "^1.3136.0",
-    "electron-updater": "^5.0.5",
+    "avrgirl-arduino": "^5.0.1",
+    "electron-updater": "^5.3.0",
     "evilscan": "^1.9.1",
-    "express": "^4.17.1",
-    "formidable": "^1.2.2",
+    "express": "^4.18.2",
+    "formidable": "^2.1.1",
     "hazardous": "^0.3.0",
-    "https": "^1.0.0",
-    "ip": "^1.1.5",
-    "jscs-loader": "^0.3.0",
+    "ip": "^1.1.8",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",
-    "mkdirp": "^1.0.4",
-    "multer": "^1.4.2",
-    "ncp": "^2.0.0",
-    "node-abi": "^2.18.0",
-    "rimraf": "^3.0.2",
-    "serialport": "^9.0.1",
+    "mkdirp": "^2.1.3",
+    "multer": "^1.4.5-lts.1",
+    "serialport": "^10.3.0",
     "socket.io": "^2.4.0"
   },
   "main": "index.js",
@@ -70,7 +57,6 @@
       "allowToChangeInstallationDirectory": true,
       "allowElevation": true,
       "license": "build/licence.txt",
-      "installerIcon": "build/icon.ico",
       "installerSidebar": "build/installerSidebar.bmp",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
@@ -127,18 +113,6 @@
       "esptool.py",
       "*.bin"
     ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64",
-            "ia32"
-          ]
-        }
-      ],
-      "icon": "build/icon.ico"
-    },
     "linux": {
       "icon": "build/",
       "target": [
