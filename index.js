@@ -941,7 +941,6 @@ io.on("connection", function(socket) {
         console.log("connect", "Connecting to " + data.port + " via " + data.type);
         port = new SerialPort({path: data.port,
           baudRate: parseInt(data.baud),
-          parser: new ReadlineParser("\n"),
           hupcl: false // Don't set DTR - useful for X32 Reset
         });
       } else if (data.type == "telnet") {
@@ -952,9 +951,9 @@ io.on("connection", function(socket) {
 
 
 
-      /*parser = port.pipe(new Readline({
+      parser = port.pipe(new ReadlineParser({
         delimiter: '\r\n'
-      }));*/
+      }));
 
       // port.on("data", function(data) {
       //   console.log(data)
@@ -1136,8 +1135,9 @@ io.on("connection", function(socket) {
         }
       }
 
-      port.on("data", function(data) {
-        //console.log(data)
+      parser.on("data", function(data) {
+        //data = data.replace(/(\r\n|\n|\r)/gm, "");
+        console.log("DATA:" + JSON.stringify(data) + ":" + data.indexOf("Grbl"))
         var command = sentBuffer[0];
 
 
@@ -1463,7 +1463,7 @@ io.on("connection", function(socket) {
 
         if (command) {
           command = command.replace(/(\r\n|\n|\r)/gm, "");
-          // debug_log("CMD: " + command + " / DATA RECV: " + data.replace(/(\r\n|\n|\r)/gm, ""));
+          debug_log("CMD: " + command + " / DATA RECV: " + data.replace(/(\r\n|\n|\r)/gm, ""));
 
           if (command != "?" && command != "M105" && data.length > 0 && data.indexOf('<') == -1) {
             var string = "";

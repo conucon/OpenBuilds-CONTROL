@@ -1,6 +1,6 @@
 var time = 10
 $(document).ready(function() {
-  checkUpdate()
+  //checkUpdate()
 });
 
 
