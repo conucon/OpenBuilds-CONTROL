@@ -1,6 +1,8 @@
 {
+  "windowtitle": "OpenBuilds CONTROL by CONUCON",
+  "controlTab": "Steuerung",
   "portConnected": "Verbunden",
-  "mmMode": "mm-Mode",
+  "mmMode": "mm-Modus",
   "runSimBtn" : "Simulieren",
   "notConnected" : "Nicht Verbunden",
   "doorSensor" : "Tür Sensor"

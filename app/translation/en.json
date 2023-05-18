@@ -1,5 +1,7 @@
 {
-    "portConnected": "Port: Connected",
+   "windowtitle": "OpenBuilds CONTROL",
+   "controlTab": "Control",
+   "portConnected": "Port: Connected",
     "mmMode": "mm-mode",
     "runSimBtn" : "simulate",
     "notConnected" : "Not Connected",
