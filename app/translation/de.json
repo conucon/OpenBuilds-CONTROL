@@ -5,5 +5,11 @@
   "mmMode": "mm-Modus",
   "runSimBtn" : "Simulieren",
   "notConnected" : "Nicht Verbunden",
-  "doorSensor" : "Tür Sensor"
+  "doorSensor" : "Tür Sensor",
+  "saveBtn" : "Firmware<br>speichern",
+  "connectBtn" : "Verbinden",
+  "disconnectBtn" : "Verbindung trennen",
+  "flashBtn" : "Flashing: Bitte warten … ",
+  "grblButtons" : "Grbl Neustart",
+  "openGcodeBtn" : "G-CODE öffnen"
 }

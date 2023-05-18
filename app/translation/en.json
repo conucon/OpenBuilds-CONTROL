@@ -1,9 +1,15 @@
 {
-   "windowtitle": "OpenBuilds CONTROL",
-   "controlTab": "Control",
-   "portConnected": "Port: Connected",
-    "mmMode": "mm-mode",
-    "runSimBtn" : "simulate",
-    "notConnected" : "Not Connected",
-    "doorSensor" : "Door Sensor"
+  "windowtitle": "OpenBuilds CONTROL",
+  "controlTab": "Control",
+  "portConnected": "Port: Connected",
+  "mmMode": "mm-mode",
+  "runSimBtn" : "simulate",
+  "notConnected" : "Not Connected",
+  "doorSensor" : "Door Sensor",
+  "saveBtn" : "Save<br>to Firmware",
+  "connectBtn" : "Connect",
+  "disconnectBtn" : "Disconnect",
+  "flashBtn" : "Flashing: please wait...",
+  "grblButtons" : "Restart Grbl",
+  "openGcodeBtn" : "Open<br>G-CODE "
   }
