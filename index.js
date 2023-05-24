@@ -1,8 +1,34 @@
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = '1';
 
 process.on('uncaughtException', function(err) {
-  console.log(err);
+  //showErrorDialog(err, attempts = 2) // make two attempts to show an uncaughtException in a dialog
+  if (DEBUG) {
+    debug_log(err)
+  } else {
+    console.log(err);
+  }
 })
+
+function showErrorDialog(err, attempts) {
+  console.error('Attempting to show an error dialog.')
+  if (!attempts) return;
+  try {
+    let options = {
+      type: 'error',
+      buttons: ['OK'],
+      title: 'Error',
+      message: `An error occured.`,
+      detail: `${err.message}\r\r\rIf you feel this shouldn't be happening, please report it at:\r\rhttps://github.com/OpenBuilds/OpenBuilds-CONTROL/issues`,
+    };
+    let window = BrowserWindow.getFocusedWindow()
+    dialog.showMessageBoxSync(window, options)
+  } catch (e) {
+    console.error(`An error occurred trying show an error, ho-boy. ${e}. We'll try again ${attempts} more time(s).`)
+    setTimeout(() => {
+      showErrorDialog(err, --attempts)
+    }, millisecondDelay = 2000);
+  }
+}
 
 // To see console.log output run with `DEBUGCONTROL=true electron .` or set environment variable for DEBUGCONTROL=true
 // debug_log debug overhead
@@ -18,14 +44,20 @@ function debug_log() {
   }
 } // end Debug Logger
 
-process.on("uncaughtException", (err) => {
-  debug_log(err)
-});
-
 debug_log("Starting OpenBuilds CONTROL v" + require('./package').version)
 
 var config = {};
-config.webPort = process.env.WEB_PORT || 3000;
+config.webPorts = [3000, 3020, 3200, 3220]
+config.webPortIdx = 0;
+config.nextWebPort = function() {
+  config.webPort = config.webPorts[config.webPortIdx]
+  config.webPortIdx++
+  if (config.webPortIdx == config.webPorts.length) {
+    throw new Error(`No ports were available to start the http server.\r\rWe tried ports ${config.webPorts.join(",")}.`);
+  }
+  return config.webPort;
+}
+config.webPort = process.env.WEB_PORT || config.nextWebPort();
 config.posDecimals = process.env.DRO_DECIMALS || 2;
 config.grblWaitTime = 0.5;
 config.firmwareWaitTime = 4;
@@ -35,21 +67,41 @@ var app = express();
 var http = require("http").Server(app);
 var https = require('https');
 
-var ioServer = require('socket.io');
+//var ioServer = require('socket.io');
+const {
+  Server: ioServer
+} = require('socket.io');
+
 var io = new ioServer();
-var safetosend;
 
 var fs = require('fs');
 var path = require("path");
 const join = require('path').join;
-var mkdirp = require('mkdirp');
-//const drivelist = require('drivelist');
-require('hazardous');
+const {
+  mkdirp
+} = require('mkdirp')
 
 
+//const drivelist = require('drivelist'); // removed in 1.0.350 due to Drivelist stability issues
+
+// FluidNC test
+var fluidncConfig = "";
+// FluidNC end test
 
 app.use(express.static(path.join(__dirname, "app")));
 //app.use(express.limit('200M'));
+
+app.use(function setCommonHeaders(req, res, next) {
+  res.set("Access-Control-Allow-Private-Network", "true");
+  next();
+});
+
+app.all('/*', function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "X-Requested-With");
+  res.header("Access-Control-Allow-Private-Network", "true");
+  next();
+});
 
 
 // Interface firmware flash
@@ -71,7 +123,7 @@ app.post('/uploadCustomFirmware', (req, res) => {
 
     // Display uploaded image for user validation
     firmwareImagePath = req.file.path;
-    res.send(`Using ` + req.file.path);
+    res.send(req.file.path);
   });
 });
 // end Interface Firmware flash
@@ -90,9 +142,20 @@ const httpsserver = https.createServer(httpsOptions, app).listen(3001, function(
   debug_log('https: listening on:' + ip.address() + ":3001");
 });
 
-const httpserver = http.listen(config.webPort, '0.0.0.0', function() {
+const httpserver = http.listen(config.webPort, '0.0.0.0', httpServerSuccess).on('error', httpServerError);
+
+function httpServerSuccess() {
   debug_log('http:  listening on:' + ip.address() + ":" + config.webPort);
-});
+  if (jogWindow) {
+    jogWindow.loadURL(`http://localhost:${config.webPort}/`);
+  }
+}
+
+function httpServerError(error) {
+  // If unable to start (port in use) - try next port in array from config.nextWebPort()
+  console.error(error.message);
+  httpserver.listen(config.nextWebPort());
+}
 
 io.attach(httpserver);
 io.attach(httpsserver);
@@ -100,8 +163,12 @@ io.attach(httpsserver);
 const grblStrings = require("./grblStrings.js");
 
 // Serial
-const { SerialPort } = require('serialport');
-const { ReadlineParser } = require('@serialport/parser-readline')
+const {
+  SerialPort
+} = require('serialport')
+const {
+  ReadlineParser
+} = require('@serialport/parser-readline');
 
 // telnet
 const net = require('net');
@@ -116,19 +183,17 @@ var lastsentuploadprogress = 0;
 // Electron app
 const electron = require('electron');
 const electronApp = electron.app;
-
+const {
+  dialog
+} = require('electron')
+electronApp.commandLine.appendSwitch('ignore-gpu-blacklist')
+electronApp.commandLine.appendSwitch('enable-gpu-rasterization')
+electronApp.commandLine.appendSwitch('enable-zero-copy')
 
 if (isElectron()) {
   debug_log("Local User Data: " + electronApp.getPath('userData'))
-  electronApp.commandLine.appendSwitch('ignore-gpu-blacklist', 'true')
-  electronApp.commandLine.appendSwitch('enable-gpu-rasterization', 'true')
-  electronApp.commandLine.appendSwitch('enable-zero-copy', 'true')
-  electronApp.commandLine.appendSwitch('disable-software-rasterizer', 'true')
-  electronApp.commandLine.appendSwitch('enable-native-gpu-memory-buffers', 'true')
-  // Removing max-old-space-size switch (Introduced in 1.0.168 and removed in 1.0.169) due it causing High CPU load on some PCs.
-  //electronApp.commandLine.appendSwitch('js-flags', '--max-old-space-size=8192')
-  debug_log('Command Line Arguments for Electron: Set OK')
 }
+
 const BrowserWindow = electron.BrowserWindow;
 const Tray = electron.Tray;
 const nativeImage = require('electron').nativeImage
@@ -212,7 +277,7 @@ if (isElectron()) {
     // repeat every minute
     setTimeout(function() {
       io.sockets.emit('updateready', availversion);
-    }, 60 * 60 * 1000) // 60 mins
+    }, 1000 * 60 * 60 * 8) // 8hrs before alerting again if it was snoozed
     updateIsDownloading = false;
   });
 } else {
@@ -328,7 +393,7 @@ var xOffset = 0.00;
 var yOffset = 0.00;
 var zOffset = 0.00;
 var aOffset = 0.00;
-var has4thAxis = false;
+
 
 var feedOverride = 100,
   spindleOverride = 100;
@@ -338,6 +403,7 @@ var feedOverride = 100,
 var re = new RegExp("^[a-f0-9]{32}");
 
 var status = {
+  login: false,
   driver: {
     version: require('./package').version,
     ipaddress: ip.address(),
@@ -349,6 +415,7 @@ var status = {
   },
   machine: {
     name: '',
+    has4thAxis: false,
     inputs: [],
     overrides: {
       feedOverride: 100, //
@@ -411,8 +478,8 @@ var status = {
       date: "",
       buffer: [],
       features: [],
-      blockBufferSize: "",
-      rxBufferSize: "",
+      blockBufferSize: 0,
+      rxBufferSize: 0,
     },
   },
   comms: {
@@ -431,7 +498,7 @@ var status = {
     alarm: ""
   },
   interface: {
-    diskdrives: [],
+    diskdrive: false,
       firmware: {
         availVersion: "",
         installedVersion: "",
@@ -442,16 +509,15 @@ var status = {
 
 
 async function findPorts() {
-  await SerialPort.list().then((ports, err) => {
-    console.log(ports)
-    oldportslist = ports;
-    status.comms.interfaces.ports = ports;
-  })  
+  const ports = await SerialPort.list()
+  // console.log(ports)
+  oldportslist = ports;
+  status.comms.interfaces.ports = ports;
 }
 findPorts()
 
 async function findChangedPorts() {
-  /*const ports = await SerialPort.list()
+  const ports = await SerialPort.list()
   // console.log(ports)
   status.comms.interfaces.ports = ports;
   if (!_.isEqual(ports, oldportslist)) {
@@ -466,19 +532,19 @@ async function findChangedPorts() {
   }
   oldportslist = ports;
   // throw new Error('No ports found')
-  findPorts()*/
+  findPorts()
 }
 
-async function findDisks() {
-  //const drives = await drivelist.list();
-  //status.interface.diskdrives = drives;
-}
+// async function findDisks() {
+//   const drives = await drivelist.list();
+//   status.interface.diskdrives = drives;
+// } // removed in 1.0.350 due to Drivelist stability issues
 
 var PortCheckinterval = setInterval(function() {
   if (status.comms.connectionStatus == 0) {
     findChangedPorts();
   }
-  findDisks();
+  //findDisks(); // removed in 1.0.350 due to Drivelist stability issues
 }, 1000);
 
 // var telnetCheckinterval = setInterval(function() {
@@ -489,7 +555,6 @@ var PortCheckinterval = setInterval(function() {
 // scanForTelnetDevices();
 
 checkPowerSettings()
-
 
 // JSON API
 app.get('/api/version', (req, res) => {
@@ -508,19 +573,7 @@ app.get('/activate', (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.send('Host: ' + req.hostname + ' asked to activate OpenBuilds CONTROL v' + require('./package').version);
-  if (jogWindow === null) {
-    createJogWindow();
-    jogWindow.show()
-    // workaround from https://github.com/electron/electron/issues/2867#issuecomment-261067169 to make window pop over for focus
-    jogWindow.setAlwaysOnTop(true);
-    jogWindow.focus();
-    jogWindow.setAlwaysOnTop(false);
-  } else {
-    jogWindow.show()
-    jogWindow.setAlwaysOnTop(true);
-    jogWindow.focus();
-    jogWindow.setAlwaysOnTop(false);
-  }
+  showJogWindow()
   setTimeout(function() {
     io.sockets.emit('activate', req.hostname);
   }, 500);
@@ -594,8 +647,9 @@ app.post('/upload', function(req, res) {
   });
 
   form.on('fileBegin', function(name, file) {
-    debug_log('Uploading ' + file.name);
-    file.path = uploadsDir + file.name;
+    debug_log(JSON.stringify(name));
+    debug_log(JSON.stringify(file));
+    debug_log('Uploading ' + file.filepath);
   });
 
   form.on('progress', function(bytesReceived, bytesExpected) {
@@ -608,22 +662,9 @@ app.post('/upload', function(req, res) {
   });
 
   form.on('file', function(name, file) {
-    debug_log('Uploaded ' + file.path);
-
-    if (jogWindow === null) {
-      createJogWindow();
-      jogWindow.show()
-      // workaround from https://github.com/electron/electron/issues/2867#issuecomment-261067169 to make window pop over for focus
-      jogWindow.setAlwaysOnTop(true);
-      jogWindow.focus();
-      jogWindow.setAlwaysOnTop(false);
-    } else {
-      jogWindow.show()
-      jogWindow.setAlwaysOnTop(true);
-      jogWindow.focus();
-      jogWindow.setAlwaysOnTop(false);
-    }
-    readFile(file.path)
+    debug_log('Uploaded ' + file.filepath);
+    showJogWindow()
+    readFile(file.filepath)
   });
 
   form.on('aborted', function() {
@@ -647,27 +688,40 @@ app.on('certificate-error', function(event, webContents, url, error,
 
 io.on("connection", function(socket) {
 
-  iosocket = socket;
+  debug_log("New IO Connection ");
 
+
+  iosocket = socket;
 
   if (status.machine.firmware.type == 'grbl') {
 
-    // handle Grbl RESET external input
-    if (status.machine.inputs.length > 0) {
-      for (i = 0; i < status.machine.inputs.length; i++) {
-        switch (status.machine.inputs[i]) {
-          case 'R':
-            // debug_log('PIN: SOFTRESET');
-            safetosend = true;
-            break;
-        }
-      }
-    } else {
-      io.sockets.emit('grbl')
-    }
-    if (safetosend != undefined && safetosend == true) {
-      io.sockets.emit('grbl')
-    }
+    debug_log("Is Grbl");
+
+
+    // // handle Grbl RESET external input
+    // if (status.machine.inputs.length > 0) {
+    //   for (i = 0; i < status.machine.inputs.length; i++) {
+    //     switch (status.machine.inputs[i]) {
+    //       case 'R':
+    //         // debug_log('PIN: SOFTRESET');
+    //         safetosend = true;
+    //         break;
+    //     }
+    //   }
+    // } else {
+    //   setTimeout(function() {
+    debug_log("Emit Grbl: 1");
+    io.sockets.emit('grbl', status.machine.firmware)
+    //   }, 10000);
+    // }
+    //
+    // if (safetosend != undefined && safetosend == true) {
+    //   setTimeout(function() {
+    //     debug_log("Emit Grbl: 2");
+    //     io.sockets.emit('grbl', status.machine.firmware)
+    //   }, 10000);
+    // }
+
   }
 
 
@@ -678,7 +732,38 @@ io.on("connection", function(socket) {
   }, 100);
 
   socket.on("scannetwork", function(data) {
-    scanForTelnetDevices()
+    scanForTelnetDevices(data)
+  })
+
+  socket.on("openFile", function(data) {
+    dialog.showOpenDialog(jogWindow, {
+      properties: ['openFile']
+    }).then(result => {
+      console.log(result.canceled)
+      console.log(result.filePaths)
+      var openFilePath = result.filePaths[0];
+      if (openFilePath !== "") {
+        debug_log("path" + openFilePath);
+        readFile(openFilePath);
+      }
+
+    }).catch(err => {
+      console.log(err)
+    })
+  })
+
+  socket.on("openInterfaceDir", function(data) {
+    dialog.showOpenDialog(jogWindow, {
+      properties: ['openDirectory'],
+      title: "Select the USB Flashdrive you want to use with Interface"
+    }).then(result => {
+      console.log(result.canceled)
+      console.log(result.filePaths)
+      io.sockets.emit("interfaceDrive", result.filePaths[0]);
+      status.interface.diskdrive = result.filePaths[0]
+    }).catch(err => {
+      console.log(err)
+    })
   })
 
   socket.on("openbuilds", function(data) {
@@ -686,6 +771,13 @@ io.on("connection", function(socket) {
       shell
     } = require('electron')
     shell.openExternal('https://www.openbuilds.com')
+  });
+
+  socket.on("openbuildspartstore", function(data) {
+    const {
+      shell
+    } = require('electron')
+    shell.openExternal('https://www.openbuildspartstore.com')
   });
 
   socket.on("carveco", function(data) {
@@ -737,6 +829,46 @@ io.on("connection", function(socket) {
     shell.openExternal('https://openbuilds.com/threads/openbuilds-control-software.13121/')
   });
 
+  socket.on("adX32", function(data) {
+    const {
+      shell
+    } = require('electron')
+    shell.openExternal('https://openbuildspartstore.com/BlackBox-Motion-Control-System-X32')
+  });
+
+  socket.on("gpuinfo", function(data) {
+    // GPU
+    var gpuInfoWindow = new BrowserWindow({
+      // 1366 * 768 == minimum to cater for
+      width: 800,
+      height: 800,
+      fullscreen: false,
+      center: true,
+      resizable: true,
+      maximizable: true,
+      title: "OpenBuilds CONTROL: Chromium's GPU Report",
+      frame: true,
+      autoHideMenuBar: true,
+      //icon: '/app/favicon.png',
+      icon: nativeImage.createFromPath(
+        path.join(__dirname, "/app/favicon.png")
+      ),
+      webgl: true,
+      experimentalFeatures: true,
+      experimentalCanvasFeatures: true,
+      offscreen: true,
+      backgroundColor: "#fff"
+    });
+    gpuInfoWindow.loadURL("chrome://gpu");
+
+    gpuInfoWindow.once('ready-to-show', () => {
+      gpuInfoWindow.show()
+      gpuInfoWindow.setAlwaysOnTop(true);
+      gpuInfoWindow.focus();
+      gpuInfoWindow.setAlwaysOnTop(false);
+    })
+  });
+
   socket.on("minimisetotray", function(data) {
     jogWindow.hide();
   });
@@ -746,10 +878,21 @@ io.on("connection", function(socket) {
   });
 
   socket.on("maximize", function(data) {
+    if (jogWindow.isFullScreen()) {
+      jogWindow.setFullScreen(false);
+    }
     if (jogWindow.isMaximized()) {
       jogWindow.unmaximize();
     } else {
       jogWindow.maximize();
+    }
+  });
+
+  socket.on("fullscreen", function(data) {
+    if (jogWindow.isFullScreen()) {
+      jogWindow.setFullScreen(false);
+    } else {
+      jogWindow.setFullScreen(true);
     }
   });
 
@@ -782,10 +925,14 @@ io.on("connection", function(socket) {
     var customImg = data.customImg
     console.log(__dirname, file, data.file)
     if (customImg) {
-      var firmwarePath = firmwareImagePath
+      var firmwarePath = data.file
     } else {
       var firmwarePath = path.join(__dirname, data.file)
     }
+
+    console.log("-------------------------------------------")
+    console.log(firmwarePath)
+    console.log("-------------------------------------------")
 
     const Avrgirl = require('avrgirl-arduino');
 
@@ -856,28 +1003,41 @@ io.on("connection", function(socket) {
   })
 
   socket.on("writeInterfaceUsbDrive", function(data) {
-    //data = mountpoint dest
+
+    debug_log(data)
+    //data.drive = mountpoint dest
+    //data.controller = type of controller
+    if (data.controller == "blackbox4x" || data.controller == "genericgrbl") {
+      var probesrc = path.join(__dirname, './app/wizards/interface/PROBE/');
+      var profilesrc = path.join(__dirname, './app/wizards/interface/PROFILESGRBL/');
+    } else if (data.controller == "blackboxx32" || data.controller == "genericgrblhal") {
+      var probesrc = path.join(__dirname, './app/wizards/interface/PROBE/');
+      var profilesrc = path.join(__dirname, './app/wizards/interface/PROFILESHAL/');
+    }
+
+    var probedest = path.join(data.drive, "/PROBE/");
+    var profiledest = path.join(data.drive, "/PROFILES/");
+
     var ncp = require('ncp').ncp;
     ncp.limit = 16;
 
     var output = {
       'command': 'Interface USB Drive',
-      'response': "Starting to copy data to " + data,
+      'response': "Starting to copy data to " + data.drive,
       'type': 'info'
     }
     io.sockets.emit('data', output);
 
     var errorCount = 0;
 
-    var src = path.join(__dirname, './app/wizards/interface/PROBE/');
-    var dest = path.join(data, "/PROBE/");
 
-    ncp(src, dest,
+
+    ncp(probesrc, probedest,
       function(err) {
         if (err) {
           var output = {
             'command': 'Interface USB Drive',
-            'response': "Failed to copy PROBE macros to " + dest + ":  " + JSON.stringify(err),
+            'response': "Failed to copy PROBE macros to " + probedest + ":  " + JSON.stringify(err),
             'type': 'error'
           }
           io.sockets.emit('data', output);
@@ -885,22 +1045,20 @@ io.on("connection", function(socket) {
         } else {
           var output = {
             'command': 'Interface USB Drive',
-            'response': "Copied PROBE macros to " + dest + " succesfully!",
+            'response': "Copied PROBE macros to " + probedest + " succesfully!",
             'type': 'success'
           }
           io.sockets.emit('data', output);
         }
       });
 
-    var src = path.join(__dirname, './app/wizards/interface/PROFILES/');
-    var dest = path.join(data, "/PROFILES/");
 
-    ncp(src, dest,
+    ncp(profilesrc, profiledest,
       function(err) {
         if (err) {
           var output = {
             'command': 'Interface USB Drive',
-            'response': "Failed to copy MACHINE PROFILES to " + dest + ":  " + JSON.stringify(err),
+            'response': "Failed to copy MACHINE PROFILES to " + profiledest + ":  " + JSON.stringify(err),
             'type': 'error'
           }
           io.sockets.emit('data', output);
@@ -908,7 +1066,7 @@ io.on("connection", function(socket) {
         } else {
           var output = {
             'command': 'Interface USB Drive',
-            'response': "Copied MACHINE PROFILES to " + dest + " succesfully!",
+            'response': "Copied MACHINE PROFILES to " + profiledest + " succesfully!",
             'type': 'success'
           }
           io.sockets.emit('data', output);
@@ -919,7 +1077,7 @@ io.on("connection", function(socket) {
       if (errorCount == 0) {
         var output = {
           'command': 'Interface USB Drive',
-          'response': "Finished copying supporting files to Drive " + data,
+          'response': "Finished copying supporting files to Drive " + data.drive,
           'type': 'success'
         }
         io.sockets.emit('data', output);
@@ -939,7 +1097,8 @@ io.on("connection", function(socket) {
 
       if (data.type == "usb") {
         console.log("connect", "Connecting to " + data.port + " via " + data.type);
-        port = new SerialPort({path: data.port,
+        port = new SerialPort({
+          path: data.port,
           baudRate: parseInt(data.baud),
           hupcl: false // Don't set DTR - useful for X32 Reset
         });
@@ -948,8 +1107,6 @@ io.on("connection", function(socket) {
         port = net.connect(23, data.ip);
         port.isOpen = true;
       }
-
-
 
       parser = port.pipe(new ReadlineParser({
         delimiter: '\r\n'
@@ -1064,7 +1221,7 @@ io.on("connection", function(socket) {
                 'type': 'info'
               }
               setTimeout(function() {
-                io.sockets.emit('grbl')
+                io.sockets.emit('grbl', status.machine.firmware)
                 //v1.0.318 - commented out as a test - too many normal alarms clear prematurely
                 //io.sockets.emit('errorsCleared', true);
               }, 600)
@@ -1136,10 +1293,12 @@ io.on("connection", function(socket) {
       }
 
       parser.on("data", function(data) {
-        //data = data.replace(/(\r\n|\n|\r)/gm, "");
-        console.log("DATA:" + JSON.stringify(data) + ":" + data.indexOf("Grbl"))
+        //console.log(data)
         var command = sentBuffer[0];
 
+        if (command == "$CD" && data != "ok") {
+          fluidncConfig = fluidncConfig += data + "\n"
+        }
 
         if (data.indexOf("<") != 0) {
           debug_log('data:', data)
@@ -1150,6 +1309,7 @@ io.on("connection", function(socket) {
           status.machine.name = data.split(':')[2].split(']')[0].toLowerCase()
           io.sockets.emit("status", status);
           io.sockets.emit("machinename", data.split(':')[2].split(']')[0].toLowerCase());
+          status.machine.firmware.date = data.split(':')[1].split(".")[2];
         }
 
         if (data.indexOf("[OPT:") === 0) {
@@ -1311,6 +1471,10 @@ io.on("connection", function(socket) {
             status.machine.firmware.type = "grbl";
             status.machine.firmware.platform = "grblHAL"
             status.machine.firmware.version = data.substr(8, 4); // get version
+          } else if (data.indexOf("FluidNC") != -1) { // Grbl 3.6 [FluidNC v3.6.5 (wifi) '$' for help]
+            status.machine.firmware.type = "grbl";
+            status.machine.firmware.platform = "FluidNC"
+            status.machine.firmware.version = data.substr(19, 5); // get version
           } else {
             status.machine.firmware.type = "grbl";
             status.machine.firmware.platform = "gnea"
@@ -1337,7 +1501,7 @@ io.on("connection", function(socket) {
           status.machine.firmware.date = "";
           // debug_log("GRBL detected");
           // setTimeout(function() {
-          //   io.sockets.emit('grbl')
+          //   io.sockets.emit('grbl', status.machine.firmware)
           //   //v1.0.318 - commented out as a test - too many normal alarms clear prematurely
           //   //io.sockets.emit('errorsCleared', true);
           // }, 600)
@@ -1391,6 +1555,9 @@ io.on("connection", function(socket) {
           if (status.machine.firmware.type === "grbl") {
             // debug_log('got OK from ' + command)
             command = sentBuffer.shift();
+          }
+          if (command == "$CD") {
+            io.sockets.emit('fluidncConfig', fluidncConfig);
           }
           status.comms.blocked = false;
           send1Q();
@@ -1463,7 +1630,7 @@ io.on("connection", function(socket) {
 
         if (command) {
           command = command.replace(/(\r\n|\n|\r)/gm, "");
-          debug_log("CMD: " + command + " / DATA RECV: " + data.replace(/(\r\n|\n|\r)/gm, ""));
+          // debug_log("CMD: " + command + " / DATA RECV: " + data.replace(/(\r\n|\n|\r)/gm, ""));
 
           if (command != "?" && command != "M105" && data.length > 0 && data.indexOf('<') == -1) {
             var string = "";
@@ -1511,6 +1678,17 @@ io.on("connection", function(socket) {
   socket.on('forceQueue', function(data) {
     send1Q();
   });
+
+  socket.on('serialInject', function(data) {
+    // Inject a live command into Serial stream in real-time (dev tool) even while a job is running, etc (straight Port.write from machineSend)
+    machineSend(data, true);
+  });
+
+  socket.on("dump", function(data) {
+    console.log(queuePointer);
+    console.log(gcodeQueue);
+    console.log(sentBuffer);
+  })
 
   socket.on('runCommand', function(data) {
     debug_log('Run Command (' + data.replace('\n', '|') + ')');
@@ -1917,6 +2095,7 @@ io.on("connection", function(socket) {
           switch (status.machine.firmware.type) {
             case 'grbl':
               clearInterval(queueCounter);
+              jogWindow.setProgressBar(0);
               addQRealtime(String.fromCharCode(0x18)); // ctrl-x
               setTimeout(function() {
                 addQRealtime('$X\n');
@@ -1960,9 +2139,7 @@ io.on("connection", function(socket) {
     }
   });
 
-  socket.on("refreshTelnetDevices", function(data) {
-    scanForTelnetDevices();
-  });
+
 
 
 });
@@ -2026,6 +2203,7 @@ function machineSend(gcode, realtime) {
       io.sockets.emit("queueCount", data);
       // debug_log(gcode)
       port.write(gcode);
+      debug_log("SENT: " + gcode)
     }
   } else {
     debug_log("PORT NOT OPEN")
@@ -2071,6 +2249,7 @@ function runJob(object) {
         // Start interval for qCount messages to socket clients
         queueCounter = setInterval(function() {
           status.comms.queue = gcodeQueue.length - queuePointer
+          jogWindow.setProgressBar(queuePointer / gcodeQueue.length)
         }, 500);
         send1Q(); // send first line
         status.comms.connectionStatus = 3;
@@ -2085,6 +2264,7 @@ function runJob(object) {
 function stopPort() {
   clearInterval(queueCounter);
   clearInterval(statusLoop);
+  jogWindow.setProgressBar(0);
   status.comms.interfaces.activePort = false;
   status.comms.interfaces.activeBaud = false;
   status.comms.connectionStatus = 0;
@@ -2104,7 +2284,7 @@ function stopPort() {
 }
 
 function parseFeedback(data) {
-  debug_log(data)
+  //debug_log(data)
   var state = data.substring(1, data.search(/(,|\|)/));
   status.comms.runStatus = state
   if (state == "Alarm") {
@@ -2121,7 +2301,7 @@ function parseFeedback(data) {
   } else if (state == "Hold:0") {
     pause();
   }
-  if (status.machine.firmware.type == "grbl" || status.machine.firmware.type == "grblhal") {
+  if (status.machine.firmware.type == "grbl") {
     // Extract work offset (for Grbl > 1.1 only!)
     var startWCO = data.search(/wco:/i) + 4;
     var wco;
@@ -2132,7 +2312,7 @@ function parseFeedback(data) {
       xOffset = parseFloat(wco[0]).toFixed(config.posDecimals);
       yOffset = parseFloat(wco[1]).toFixed(config.posDecimals);
       zOffset = parseFloat(wco[2]).toFixed(config.posDecimals);
-      if (has4thAxis) {
+      if (status.machine.has4thAxis) {
         aOffset = parseFloat(wco[3]).toFixed(config.posDecimals);
         status.machine.position.offset.x = parseFloat(xOffset);
         status.machine.position.offset.y = parseFloat(yOffset);
@@ -2172,10 +2352,10 @@ function parseFeedback(data) {
       if (wPos.length > 3) {
         if (aPos !== parseFloat(wPos[3]).toFixed(config.posDecimals)) {
           aPos = parseFloat(wPos[3]).toFixed(config.posDecimals);
-          has4thAxis = true;
+          status.machine.has4thAxis = true;
         }
       }
-      if (has4thAxis) {
+      if (status.machine.has4thAxis) {
         status.machine.position.work.x = parseFloat(xPos);
         status.machine.position.work.y = parseFloat(yPos);
         status.machine.position.work.z = parseFloat(zPos);
@@ -2200,10 +2380,10 @@ function parseFeedback(data) {
       if (mPos.length > 3) {
         if (aPos !== parseFloat(mPos[3]).toFixed(config.posDecimals)) {
           aPos = parseFloat(mPos[3]).toFixed(config.posDecimals);
-          has4thAxis = true;
+          status.machine.has4thAxis = true;
         }
       }
-      if (has4thAxis) {
+      if (status.machine.has4thAxis) {
         status.machine.position.work.x = parseFloat(parseFloat(xPos - status.machine.position.offset.x).toFixed(config.posDecimals));
         status.machine.position.work.y = parseFloat(parseFloat(yPos - status.machine.position.offset.y).toFixed(config.posDecimals));
         status.machine.position.work.z = parseFloat(parseFloat(zPos - status.machine.position.offset.z).toFixed(config.posDecimals));
@@ -2537,11 +2717,16 @@ function BufferSpace(firmware) {
     total += sentBuffer[i].length;
   }
   if (firmware == "grbl") {
-    if (status.machine.firmware.platform == "grblHAL") {
-      return GRBLHAL_RX_BUFFER_SIZE - total;
+    if (status.machine.firmware.rxBufferSize > 0) {
+      return (status.machine.firmware.rxBufferSize - 1) - total;
     } else {
-      return GRBL_RX_BUFFER_SIZE - total;
+      if (status.machine.firmware.platform == "grblHAL") {
+        return GRBLHAL_RX_BUFFER_SIZE - total;
+      } else {
+        return GRBL_RX_BUFFER_SIZE - total;
+      }
     }
+
   }
 }
 
@@ -2592,6 +2777,7 @@ function send1Q() {
       }
       status.comms.connectionStatus = 2; // finished
       clearInterval(queueCounter);
+      jogWindow.setProgressBar(0);
       gcodeQueue.length = 0; // Dump the Queye
       queuePointer = 0;
       status.comms.connectionStatus = 2; // finished
@@ -2616,12 +2802,17 @@ function addQToEnd(gcode) {
   if (testGcode.indexOf("$H") != -1) {
     status.machine.modals.homedRecently = true;
   }
+  if (testGcode == "$CD") {
+    fluidncConfig = ""; // empty string
+  }
   if (new RegExp(modalCommands.join("|")).test(testGcode)) {
     gcodeQueue.push("$G");
   }
   if (gcode.match(/T([\d.]+)/i)) {
     gcodeQueue.push("$G");
   }
+
+
 }
 
 function addQToStart(gcode) {
@@ -2631,6 +2822,16 @@ function addQToStart(gcode) {
 function addQRealtime(gcode) {
   // realtime command skip the send1Q as it doesnt respond with an ok
   machineSend(gcode, true);
+}
+
+function showJogWindow() {
+  if (jogWindow === null) {
+    createJogWindow();
+  }
+  jogWindow.show()
+  jogWindow.setAlwaysOnTop(true);
+  jogWindow.focus();
+  jogWindow.setAlwaysOnTop(false);
 }
 
 // Electron
@@ -2679,25 +2880,17 @@ if (isElectron()) {
       }
 
       if (lauchGUI) {
-        if (jogWindow === null) {
-          createJogWindow();
-          jogWindow.show()
-          jogWindow.setAlwaysOnTop(true);
-          jogWindow.focus();
-          jogWindow.setAlwaysOnTop(false);
-        } else {
-          jogWindow.show()
-          jogWindow.setAlwaysOnTop(true);
-          jogWindow.focus();
-          jogWindow.setAlwaysOnTop(false);
-        }
+        showJogWindow()
       }
-
-
-
     })
     // Create myWindow, load the rest of the app, etc...
-    app.on('ready', () => {})
+    electronApp.on('ready', () => {
+      if (process.platform == 'win32') {
+        // Don't show window - sit in Tray
+      } else {
+        showJogWindow() // Macos and Linux - launch GUI
+      }
+    })
   }
 
   if (electronApp) {
@@ -2720,18 +2913,7 @@ if (isElectron()) {
       }
 
       if (process.platform == 'darwin' || uploadedgcode.length > 1) {
-        if (jogWindow === null) {
-          createJogWindow();
-          jogWindow.show()
-          jogWindow.setAlwaysOnTop(true);
-          jogWindow.focus();
-          jogWindow.setAlwaysOnTop(false);
-        } else {
-          jogWindow.show()
-          jogWindow.setAlwaysOnTop(true);
-          jogWindow.focus();
-          jogWindow.setAlwaysOnTop(false);
-        }
+        showJogWindow()
       }
 
     }
@@ -2813,18 +2995,7 @@ if (isElectron()) {
           label: 'Open User Interface (GUI)',
           click() {
             // debug_log("Clicked Systray")
-            if (jogWindow === null) {
-              createJogWindow();
-              jogWindow.show()
-              jogWindow.setAlwaysOnTop(true);
-              jogWindow.focus();
-              jogWindow.setAlwaysOnTop(false);
-            } else {
-              jogWindow.show()
-              jogWindow.setAlwaysOnTop(true);
-              jogWindow.focus();
-              jogWindow.setAlwaysOnTop(false);
-            }
+            showJogWindow()
           }
         }, {
           label: 'Quit OpenBuilds CONTROL (Disables all integration until started again)',
@@ -2838,36 +3009,14 @@ if (isElectron()) {
         if (appIcon) {
           appIcon.on('click', function() {
             // debug_log("Clicked Systray")
-            if (jogWindow === null) {
-              createJogWindow();
-              jogWindow.show()
-              jogWindow.setAlwaysOnTop(true);
-              jogWindow.focus();
-              jogWindow.setAlwaysOnTop(false);
-            } else {
-              jogWindow.show()
-              jogWindow.setAlwaysOnTop(true);
-              jogWindow.focus();
-              jogWindow.setAlwaysOnTop(false);
-            }
+            showJogWindow()
           })
         }
 
         if (appIcon) {
           appIcon.on('balloon-click', function() {
             // debug_log("Clicked Systray")
-            if (jogWindow === null) {
-              createJogWindow();
-              jogWindow.show()
-              jogWindow.setAlwaysOnTop(true);
-              jogWindow.focus();
-              jogWindow.setAlwaysOnTop(false);
-            } else {
-              jogWindow.show()
-              jogWindow.setAlwaysOnTop(true);
-              jogWindow.focus();
-              jogWindow.setAlwaysOnTop(false);
-            }
+            showJogWindow()
           })
         }
 
@@ -2901,7 +3050,7 @@ if (isElectron()) {
       // Create the browser window.
       jogWindow = new BrowserWindow({
         // 1366 * 768 == minimum to cater for
-        width: 890,
+        width: 1000,
         height: 850,
         fullscreen: false,
         center: true,
@@ -2918,12 +3067,17 @@ if (isElectron()) {
         experimentalFeatures: true,
         experimentalCanvasFeatures: true,
         offscreen: true,
+        backgroundColor: "#fff",
+        webPreferences: {
+          nodeIntegration: true,
+          contextIsolation: false
+        }
       });
 
       jogWindow.setOverlayIcon(nativeImage.createFromPath(iconPath), 'Icon');
       var ipaddr = ip.address();
       // jogWindow.loadURL(`//` + ipaddr + `:3000/`)
-      jogWindow.loadURL("http://localhost:3000/");
+      jogWindow.loadURL(`http://localhost:${config.webPort}/`);
       //jogWindow.webContents.openDevTools()
 
       jogWindow.on('close', function(event) {
@@ -2941,10 +3095,7 @@ if (isElectron()) {
         jogWindow = null;
       });
       jogWindow.once('ready-to-show', () => {
-        jogWindow.show()
-        jogWindow.setAlwaysOnTop(true);
-        jogWindow.focus();
-        jogWindow.setAlwaysOnTop(false);
+        showJogWindow()
       })
     }
 
@@ -2986,7 +3137,7 @@ if (isElectron()) {
     });
 
     // Autostart on Login
-    if (!process.platform == 'darwin') {
+    if (process.platform == 'win32') {
       electronApp.setLoginItemSettings({
         openAtLogin: true,
         args: []
@@ -3041,6 +3192,7 @@ function stop(data) {
         break;
     }
     clearInterval(queueCounter);
+    jogWindow.setProgressBar(0);
     status.comms.queue = 0
     queuePointer = 0;
     gcodeQueue.length = 0; // Dump the queue
@@ -3121,7 +3273,7 @@ function startChrome() {
     const {
       spawn
     } = require('child_process');
-    const chrome = spawn('chromium-browser', ['-app=http://127.0.0.1:3000']);
+    const chrome = spawn('chromium-browser', [`-app=http://127.0.0.1:${config.webPort}`]);
     chrome.on('close', (code) => {
       debug_log(`Chromium process exited with code ${code}`);
       process.exit(0);
@@ -3204,7 +3356,7 @@ function flashInterface(data) {
   var board = data.board
 
 
-  console.log("Flashing Interface on " + port + " with board " + board + " file: " + file)
+  console.log("Flashing Interface on " + port + " with file: " + file)
   // var data = {
   //   'port': port,
   //   'string': debugString
@@ -3231,17 +3383,21 @@ function flashInterface(data) {
     '--flash_mode', 'dio',
     '--flash_freq', '80m',
     '--flash_size', 'detect',
-    '0xe000', path.join(__dirname, "./boot_app0.bin"),
-    '0x1000', path.join(__dirname, "./bootloader_qio_80m.bin"),
-    '0x10000', path.resolve(firmwareImagePath),
-    '0x8000', path.join(__dirname, "./firmware.partitions.bin")
+    '0xe000', path.join(__dirname, "./boot_app0.bin").replace('app.asar', 'app.asar.unpacked'),
+    '0x1000', path.join(__dirname, "./bootloader_qio_80m.bin").replace('app.asar', 'app.asar.unpacked'),
+    '0x10000', path.resolve(firmwareImagePath).replace('app.asar', 'app.asar.unpacked'),
+    '0x8000', path.join(__dirname, "./firmware.partitions.bin").replace('app.asar', 'app.asar.unpacked')
   ];
 
-  if (process.platform != 'win32') {
-    fs.chmodSync(path.join(__dirname, "./esptool.py"), 0o755);
-    var child = spawn(path.join(__dirname, "./esptool.py"), esptool_opts);
+  if (process.platform == 'linux') {
+    //path.join(__dirname, "..", "lib", "resources", "vad.onnx"),
+    fs.chmodSync(path.join(__dirname, "./esptool.py").replace('app.asar', 'app.asar.unpacked'), 0o755);
+    var child = spawn(path.join(__dirname, "./esptool.py").replace('app.asar', 'app.asar.unpacked'), esptool_opts);
   } else if (process.platform == 'win32') {
-    var child = spawn(path.join(__dirname, "./esptool.exe"), esptool_opts);
+    var child = spawn(path.join(__dirname, "./esptool.exe").replace('app.asar', 'app.asar.unpacked'), esptool_opts);
+  } else if (process.platform == 'darwin') {
+    fs.chmodSync(path.join(__dirname, "./esptool.py").replace('app.asar', 'app.asar.unpacked'), 0o755);
+    var child = spawn(path.join(__dirname, "./esptool.py").replace('app.asar', 'app.asar.unpacked'), esptool_opts);
   }
 
 
@@ -3293,6 +3449,7 @@ function flashGrblHal(data) {
   var port = data.port;
   var file = data.file;
   var customImg = data.customImg
+  var erase = data.erase
 
   if (customImg == true) {
     var firmwarePath = firmwareImagePath
@@ -3300,7 +3457,7 @@ function flashGrblHal(data) {
     var firmwarePath = path.join(__dirname, file)
   }
 
-  console.log("Flashing BlackBoxX32 on " + port + " with file: " + path.resolve(firmwarePath))
+  console.log("Flashing BlackBoxX32 on " + port + " with file: " + path.resolve(firmwarePath).replace('app.asar', 'app.asar.unpacked'))
 
   var data = {
     'port': port,
@@ -3318,19 +3475,25 @@ function flashGrblHal(data) {
     '--flash_mode', 'dio',
     '--flash_size', 'detect',
     '--flash_freq', '40m',
-    '0x1000', path.join(__dirname, "./grblhal-bootloader.bin"),
-    '0x8000', path.join(__dirname, "./grblhal-partition-table.bin"),
-    '0x10000', path.resolve(firmwarePath)
+    '0x1000', path.join(__dirname, "./grblhal-bootloader.bin").replace('app.asar', 'app.asar.unpacked'),
+    '0x8000', path.join(__dirname, "./grblhal-partition-table.bin").replace('app.asar', 'app.asar.unpacked'),
+    '0x10000', path.resolve(firmwarePath).replace('app.asar', 'app.asar.unpacked')
   ];
 
-  if (process.platform != 'win32') {
-    fs.chmodSync(path.join(__dirname, "./esptool.py"), 0o755);
-    var child = spawn(path.join(__dirname, "./esptool.py"), esptool_opts);
-  } else if (process.platform == 'win32') {
-    var child = spawn(path.join(__dirname, "./esptool.exe"), esptool_opts);
+  if (erase == true) {
+    esptool_opts.push('--erase-all');
   }
 
-
+  if (process.platform == 'linux') {
+    //path.join(__dirname, "..", "lib", "resources", "vad.onnx"),
+    fs.chmodSync(path.join(__dirname, "./esptool.py").replace('app.asar', 'app.asar.unpacked'), 0o755);
+    var child = spawn(path.join(__dirname, "./esptool.py").replace('app.asar', 'app.asar.unpacked'), esptool_opts);
+  } else if (process.platform == 'win32') {
+    var child = spawn(path.join(__dirname, "./esptool.exe").replace('app.asar', 'app.asar.unpacked'), esptool_opts);
+  } else if (process.platform == 'darwin') {
+    fs.chmodSync(path.join(__dirname, "./esptool.py").replace('app.asar', 'app.asar.unpacked'), 0o755);
+    var child = spawn(path.join(__dirname, "./esptool.py").replace('app.asar', 'app.asar.unpacked'), esptool_opts);
+  }
 
 
   child.stdout.on('data', function(data) {
@@ -3372,23 +3535,36 @@ function flashGrblHal(data) {
 
 
 // LAN Scanner for BlackBox X32, Interface, SwitchBlox etc //
-function scanForTelnetDevices() {
-  var localNetwork = ip.address().split('.');
-  var network = localNetwork[0] + '.' + localNetwork[1] + '.' + localNetwork[2];
-  var range = network + ".1-" + network + ".254"
+function scanForTelnetDevices(range) {
+  //var localNetwork = ip.address().split('.');
+  //var network = localNetwork[0] + '.' + localNetwork[1] + '.' + localNetwork[2];
+  //var range = network + ".1-" + network + ".254"
 
   var networkDevices = []
   oldiplist = status.comms.interfaces.networkDevices;
-  const options = {
+  const telnetScanOptions = {
     target: range,
     port: '23',
     status: 'TROU', // Timeout, Refused, Open, Unreachable
     banner: true
   };
 
-  new Evilscan(options, (err, scan) => {
+  var output = {
+    'command': 'network',
+    'response': "Starting network scan for: " + telnetScanOptions.target,
+    'type': 'success'
+  }
+  io.sockets.emit('data', output);
+
+  new Evilscan(telnetScanOptions, (err, scan) => {
 
     if (err) {
+      var output = {
+        'command': 'network',
+        'response': "Network Scan error: " + err,
+        'type': 'success'
+      }
+      io.sockets.emit('data', output);
       //console.log(err);
       return;
     }
@@ -3433,6 +3609,21 @@ function scanForTelnetDevices() {
         }
       }
       oldiplist = status.comms.interfaces.networkDevices;
+      if (status.comms.interfaces.networkDevices.length > 0) {
+        var output = {
+          'command': 'network',
+          'response': "Network Scan completed. Found " + status.comms.interfaces.networkDevices.length + " devices.  Network addresses added to the Port selection dropdown.",
+          'type': 'success'
+        }
+      } else {
+        var output = {
+          'command': 'network',
+          'response': "Network Scan completed. Found " + status.comms.interfaces.networkDevices.length + " devices",
+          'type': 'error'
+        }
+      }
+
+      io.sockets.emit('data', output);
     });
 
     scan.run();

@@ -1,7 +1,9 @@
 {
-    "portConnected": "Port: Connected",
-    "mmMode": "mm-mode",
-    "runSimBtn" : "simulate",
-    "notConnected" : "Not Connected",
-    "doorSensor" : "Door Sensor"
-  }
+  "portConnected": "Port: Connected",
+  "mmMode": "mm-mode",
+  "runSimBtn" : "simulate",
+  "notConnected" : "Port: Not Connected",
+  "connectStateNotConnected" : "Not Connected",
+  "doorSensor" : "Door Sensor",
+  "powerSettings": "Power Settings"
+}

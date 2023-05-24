@@ -1,5 +1,3 @@
-//TODO:  Merge Name, Description, Template into array under object
-
 var grblSettingsTemplate2 = {
   0: {
     key: `$0`,
@@ -152,12 +150,9 @@ var grblSettingsTemplate2 = {
   },
   22: {
     key: `$22`,
-    title: `Homing cycle enable, boolean`,
+    title: `Homing cycle enable, boolean (Grbl) / mask (GrblHAL)`,
     description: `The homing cycle is used to accurately and precisely locate a known and consistent position on a machine every time you start up your Grbl between sessions. In other words, you know exactly where you are at any given time, every time. Say you start machining something or are about to start the next step in a job and the power goes out, you re-start Grbl and Grbl has no idea where it is due to steppers being open-loop control. You're left with the task of figuring out where you are. If you have homing, you always have the machine zero reference point to locate from, so all you have to do is run the homing cycle and resume where you left off. To set up the homing cycle for Grbl, you need to have limit switches in a fixed position that won't get bumped or moved, or else your reference point gets messed up. Usually they are setup in the farthest point in +x, +y, +z of each axes. Wire your limit switches in with the limit pins, add a recommended RC-filter to help reduce electrical noise, and enable homing. If you're curious, you can use your limit switches for both hard limits AND homing. They play nice with each other. Prior to trying the homing cycle for the first time, make sure you have setup everything correctly, otherwise homing may behave strangely. First, ensure your machine axes are moving in the correct directions per Cartesian coordinates (right-hand rule). If not, fix it with the $3 direction invert setting. Second, ensure your limit switch pins are not showing as 'triggered' in Grbl's status reports. If are, check your wiring and settings. Finally, ensure your $13x max travel settings are somewhat accurate (within 20%), because Grbl uses these values to determine how far it should search for the homing switches. By default, Grbl's homing cycle moves the Z-axis positive first to clear the workspace and then moves both the X and Y-axes at the same time in the positive direction. To set up how your homing cycle behaves, there are more Grbl settings down the page describing what they do (and compile-time options as well.). Also, one more thing to note, when homing is enabled. Grbl will lock out all G-code commands until you perform a homing cycle. Meaning no axes motions, unless the lock is disabled ($X) but more on that later. Most, if not all CNC controllers, do something similar, as it is mostly a safety feature to prevent users from making a positioning mistake, which is very easy to do and be saddened when a mistake ruins a part. If you find this annoying or find any weird bugs, please let us know and we'll try to work on it so everyone is happy. :)  NOTE: Check out config.h for more homing options for advanced users. You can disable the homing lockout at startup, configure which axes move first during a homing cycle and in what order, and more.`,
-    template: `<select id="val-22-input">
-             <option value="0">&#x2717; Disable</option>
-             <option value="1">&#x2713; Enable</option>
-          </select>`,
+    template: `<input id="val-22-input" data-role="input" data-clear-button="false" data-append="mask" type="text">`,
     utils: ``
   },
   23: {
@@ -308,6 +303,13 @@ var grblSettingsTemplate2 = {
             </button>
             </center>`
   },
+  103: {
+    key: `$103`,
+    title: `A-axis steps per degree`,
+    description: `Grbl needs to know how far each step will take the tool in reality.`,
+    template: `<input  id="val-103-input" data-role="input" data-clear-button="false" data-append="steps/deg" type="text">`,
+    utils: ``
+  },
   110: {
     key: `$110`,
     title: `X-axis maximum rate, mm/min`,
@@ -327,6 +329,13 @@ var grblSettingsTemplate2 = {
     title: `Z-axis maximum rate, mm/min`,
     description: `This sets the maximum rate each axis can move. Whenever Grbl plans a move, it checks whether or not the move causes any one of these individual axes to exceed their max rate. If so, it'll slow down the motion to ensure none of the axes exceed their max rate limits. This means that each axis has its own independent speed, which is extremely useful for limiting the typically slower Z-axis. The simplest way to determine these values is to test each axis one at a time by slowly increasing max rate settings and moving it. For example, to test the X-axis, send Grbl something like G0 X50 with enough travel distance so that the axis accelerates to its max speed. You'll know you've hit the max rate threshold when your steppers stall. It'll make a bit of noise, but shouldn't hurt your motors. Enter a setting a 10-20% below this value, so you can account for wear, friction, and the mass of your workpiece/tool. Then, repeat for your other axes. NOTE: This max rate setting also sets the G0 seek rates.`,
     template: `<input  id="val-112-input" data-role="input" data-clear-button="false" data-append="mm/min"  type="text">`,
+    utils: ``
+  },
+  113: {
+    key: `$113`,
+    title: `A-axis maximum rate, deg/min`,
+    description: `This sets the maximum rate each axis can move. Whenever Grbl plans a move, it checks whether or not the move causes any one of these individual axes to exceed their max rate. If so, it'll slow down the motion to ensure none of the axes exceed their max rate limits. This means that each axis has its own independent speed, which is extremely useful for limiting the typically slower Z-axis. The simplest way to determine these values is to test each axis one at a time by slowly increasing max rate settings and moving it. For example, to test the X-axis, send Grbl something like G0 X50 with enough travel distance so that the axis accelerates to its max speed. You'll know you've hit the max rate threshold when your steppers stall. It'll make a bit of noise, but shouldn't hurt your motors. Enter a setting a 10-20% below this value, so you can account for wear, friction, and the mass of your workpiece/tool. Then, repeat for your other axes. NOTE: This max rate setting also sets the G0 seek rates.`,
+    template: `<input  id="val-113-input" data-role="input" data-clear-button="false" data-append="deg/min"  type="text">`,
     utils: ``
   },
   120: {
@@ -350,6 +359,13 @@ var grblSettingsTemplate2 = {
     template: `<input  id="val-122-input" data-role="input" data-clear-button="false" data-append="mm/sec&sup2" type="text">`,
     utils: ``
   },
+  123: {
+    key: `$123`,
+    title: `A-axis acceleration, deg/sec^2`,
+    description: `This sets the axes acceleration parameters in mm/second/second. Simplistically, a lower value makes Grbl ease slower into motion, while a higher value yields tighter moves and reaches the desired feed rates much quicker. Much like the max rate setting, each axis has its own acceleration value and are independent of each other. This means that a multi-axis motion will only accelerate as quickly as the lowest contributing axis can. Again, like the max rate setting, the simplest way to determine the values for this setting is to individually test each axis with slowly increasing values until the motor stalls. Then finalize your acceleration setting with a value 10-20% below this absolute max value. This should account for wear, friction, and mass inertia. We highly recommend that you dry test some G-code programs with your new settings before committing to them. Sometimes the loading on your machine is different when moving in all axes together.`,
+    template: `<input  id="val-123-input" data-role="input" data-clear-button="false" data-append="deg/sec&sup2" type="text">`,
+    utils: ``
+  },
   130: {
     key: `$130`,
     title: `X-axis maximum travel, millimeters`,
@@ -369,6 +385,13 @@ var grblSettingsTemplate2 = {
     title: `Z-axis maximum travel, millimeters`,
     description: `This sets the maximum travel from end to end for each axis in mm. This is only useful if you have soft limits (and homing) enabled, as this is only used by Grbl's soft limit feature to check if you have exceeded your machine limits with a motion command.`,
     template: `<input id="val-132-input" data-role="input" data-clear-button="false" data-append="mm" type="text">`,
+    utils: ``
+  },
+  133: {
+    key: `$133`,
+    title: `A-axis maximum travel, degrees`,
+    description: `This sets the maximum travel from end to end for each axis. This is only useful if you have soft limits (and homing) enabled, as this is only used by Grbl's soft limit feature to check if you have exceeded your machine limits with a motion command.`,
+    template: `<input id="val-133-input" data-role="input" data-clear-button="false" data-append="deg" type="text">`,
     utils: ``
   },
   7: {
@@ -547,7 +570,7 @@ var grblSettingsTemplate2 = {
     utils: ``
   },
   63: {
-    key: `$`,
+    key: `$63`,
     title: `Feed Hold Actions`,
     description: `Disable Laser During Hold, Restore Spindle/Coolant on Resume (Mask)`,
     template: `<input id="val-63-input" data-role="input" data-clear-button="false" data-append="mask" type="text" >`,
@@ -613,7 +636,7 @@ var grblSettingsTemplate2 = {
     key: `$70`,
     title: `Network Services`,
     description: `70`,
-    template: `<input id="val--input" data-role="input" data-clear-button="false" data-append="mask" type="text" >`,
+    template: `<input id="val-70-input" data-role="input" data-clear-button="false" data-append="mask" type="text" >`,
     utils: ``
   },
   300: {
@@ -684,6 +707,188 @@ var grblSettingsTemplate2 = {
     title: `Wifi network PSK`,
     description: ``,
     template: `<input id="val-75-input" data-role="input" data-clear-button="false" data-append="psk" type="text" >`,
+    utils: ``
+  },
+  65: {
+    key: `$65`,
+    title: `Require homing sequence to be executed at startup`,
+    description: `Require homing sequence to be executed at startup(?). Replaces #define HOMING_INIT_LOCK.`,
+    template: `<input id="val-65-input" data-role="input" data-clear-button="false" data-append="" type="number" >`,
+    utils: ``
+  },
+  8: {
+    key: `$8`,
+    title: `Ganged axes direction invert as bitfield`,
+    description: `Ganged axes direction invert as bitfield`,
+    template: `<input id="val-8-input" data-role="input" data-clear-button="false" data-append="bitfield" type="number" >`,
+    utils: ``
+  },
+  9: {
+    key: `$9`,
+    title: `PWM Spindle as bitfield where setting bit 0 enables the rest`,
+    description: `PWM Spindle as bitfield where setting bit 0 enables the rest`,
+    template: `<input id="val-9-input" data-role="input" data-clear-button="false" data-append="bitfield" type="number" >`,
+    utils: ``
+  },
+  320: {
+    key: `$320`,
+    title: `Hostname, max: 64`,
+    description: `Hostname, max: 64`,
+    template: `<input id="val-320-input" data-role="input" data-clear-button="false" data-append="text" type="text" >`,
+    utils: ``
+  },
+  322: {
+    key: `$322`,
+    title: `IP Address`,
+    description: `IP Address`,
+    template: `<input id="val-322-input" data-role="input" data-clear-button="false" data-append="ip" type="text" >`,
+    utils: ``
+  },
+  323: {
+    key: `$323`,
+    title: `Gateway`,
+    description: `Gateway as IP address, reboot required`,
+    template: `<input id="val-323-input" data-role="input" data-clear-button="false" data-append="ip" type="text" >`,
+    utils: ``
+  },
+  324: {
+    key: `$324`,
+    title: `Netmask`,
+    description: `Netmask as IP address, reboot required`,
+    template: `<input id="val-324-input" data-role="input" data-clear-button="false" data-append="bitfield" type="text" >`,
+    utils: ``
+  },
+  325: {
+    key: `$325`,
+    title: `Telnet port`,
+    description: `Telnet port, range: 1 - 65535 reboot required`,
+    template: `<input id="val-325-input" data-role="input" data-clear-button="false" data-append="netmask" type="number" >`,
+    utils: ``
+  },
+  326: {
+    key: `$326`,
+    title: `HTTP port`,
+    description: `HTTP port, range: 1 - 65535, reboot required`,
+    template: `<input id="val-326-input" data-role="input" data-clear-button="false" data-append="port" type="number" >`,
+    utils: ``
+  },
+  327: {
+    key: `$327`,
+    title: `Websocket port`,
+    description: `Websocket port, range: 1 - 65535, reboot require`,
+    template: `<input id="val-327-input" data-role="input" data-clear-button="false" data-append="port" type="number" >`,
+    utils: ``
+  },
+  346: {
+    key: `$346`,
+    title: `Restore position after M6 as boolean`,
+    description: `Restore position after M6 as boolean`,
+    template: `<input id="val-346-input" data-role="input" data-clear-button="false" data-append="bool" type="number" >`,
+    utils: ``
+  },
+  396: {
+    key: `$396`,
+    title: `WebUI timeout in minutes`,
+    description: `WebUI timeout in minutes`,
+    template: `<input id="val-396-input" data-role="input" data-clear-button="false" data-append="min" type="number" >`,
+    utils: ``
+  },
+  397: {
+    key: `$397`,
+    title: `WebUI auto report interval in milliseconds`,
+    description: `WebUI auto report interval in milliseconds, max: 9999, reboot required`,
+    template: `<input id="val-397-input" data-role="input" data-clear-button="false" data-append="ms" type="number" >`,
+    utils: ``
+  },
+  398: {
+    key: `$398`,
+    title: `Planner buffer blocks`,
+    description: `Planner buffer blocks, range: 30 - 1000, reboot required`,
+    template: `<input id="val-398-input" data-role="input" data-clear-button="false" data-append="blocks" type="number" >`,
+    utils: ``
+  },
+  481: {
+    key: `$481`,
+    title: `Autoreport interval in ms`,
+    description: `Autoreport interval in ms, range: 100 - 1000, reboot required`,
+    template: `<input id="val-481-input" data-role="input" data-clear-button="false" data-append="ms" type="number" >`,
+    utils: ``
+  },
+  376: {
+    key: `$376`,
+    title: `Rotational axes as bitfield`,
+    description: `Autoreport interval in ms, range: 100 - 1000, reboot required`,
+    template: `<input id="val-376-input" data-role="input" data-clear-button="false" data-append="bitfield" type="number" >`,
+    utils: ``
+  },
+  41: {
+    key: `$41`,
+    title: `Parking cycle as bitfield where setting bit 0 enables the rest`,
+    description: `Parking cycle: Enable (1), Enable parking override control (2), Deactivate upon init (4)`,
+    template: `<input id="val-41-input" data-role="input" data-clear-button="false" data-append="bitfield" type="number" >`,
+    utils: ``
+  },
+  42: {
+    key: `$42`,
+    title: `Parking axis`,
+    description: `Parking axis: X=1, Y=2, Z=4`,
+    template: `<input id="val-42-input" data-role="input" data-clear-button="false" data-append="bitfield" type="number" >`,
+    utils: ``
+  },
+  56: {
+    key: `$56`,
+    title: `Parking pull-out distance in mm`,
+    description: ``,
+    template: `<input id="val-56-input" data-role="input" data-clear-button="false" data-append="mm" type="number" >`,
+    utils: ``
+  },
+  57: {
+    key: `$57`,
+    title: `Parking pull-out rate in mm/min`,
+    description: ``,
+    template: `<input id="val-57-input" data-role="input" data-clear-button="false" data-append="mm/min" type="number" >`,
+    utils: ``
+  },
+  58: {
+    key: `$58`,
+    title: `Parking target in mm`,
+    description: `Parking target in mm`,
+    template: `<input id="val-58-input" data-role="input" data-clear-button="false" data-append="mm" type="number" >`,
+    utils: ``
+  },
+  59: {
+    key: `$59`,
+    title: `Parking fast rate in mm/min`,
+    description: `Parking fast rate in mm/min`,
+    template: `<input id="val-59-input" data-role="input" data-clear-button="false" data-append="mm/min" type="number" >`,
+    utils: ``
+  },
+  60: {
+    key: `$60`,
+    title: `Restore overrides`,
+    description: `Restore overrides`,
+    template: `<input id="val-60-input" data-role="input" data-clear-button="false" data-append="bool" type="number" >`,
+    utils: ``
+  },
+  61: {
+    key: `$61`,
+    title: `Safety door options as bitfield`,
+    description: `Ignore when idle (1), Keep coolant state on open (2)`,
+    template: `<input id="val-61-input" data-role="input" data-clear-button="false" data-append="bitfield" type="number" >`,
+    utils: ``
+  },
+  392: {
+    key: `$392`,
+    title: `Spindle on delay in s`,
+    description: `Spindle on delay in s`,
+    template: `<input id="val-392-input" data-role="input" data-clear-button="false" data-append="sec" type="number" >`,
+    utils: ``
+  },
+  393: {
+    key: `$393`,
+    title: `Coolant on delay in s`,
+    description: `Coolant on delay in s`,
+    template: `<input id="val-393-input" data-role="input" data-clear-button="false" data-append="sec" type="number" >`,
     utils: ``
   }
 }

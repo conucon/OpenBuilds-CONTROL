@@ -1,4 +1,4 @@
-var selectedControllerType = 'blackbox4x'
+var selectedControllerType = 'blackboxx32'
 
 function flashToolBoard(device) {
   selectedControllerType = device
@@ -6,6 +6,7 @@ function flashToolBoard(device) {
     $("#grblAxesCount").data("select").val("3axes-grbl")
     $("#flash-tool-grbl-row").show();
     $("#flash-tool-grblhal-row").hide();
+    $("#flash-tool-erase-row").hide();
     $("#flash-tool-interface-fw-row").hide();
     $("#flash-tool-custom-row").hide();
     $("#customFirmwareSet").html("Please select the Grbl Firmware hex file you want to flash");
@@ -13,6 +14,7 @@ function flashToolBoard(device) {
     $("#grblHalAxesCount").data("select").val("3axes-grblhal")
     $("#flash-tool-grbl-row").hide();
     $("#flash-tool-grblhal-row").show();
+    $("#flash-tool-erase-row").show();
     $("#flash-tool-interface-fw-row").hide();
     $("#flash-tool-custom-row").hide();
     $("#customFirmwareSet").html("Please select the GrblHAL Firmware binary file you want to flash");
@@ -20,6 +22,7 @@ function flashToolBoard(device) {
     $("#interfaceFirmwareVer").data("select").val("online")
     $("#flash-tool-grbl-row").hide();
     $("#flash-tool-grblhal-row").hide();
+    $("#flash-tool-erase-row").hide();
     $("#flash-tool-interface-fw-row").show();
     $("#customFirmwareSet").html("Please select the Interface Firmware binary file you want to flash");
   }
@@ -32,8 +35,8 @@ function openFlashingTool() {
 
     <p class="small mb-4">You can use this wizard to flash Firmware onto compatible controllers. Only use with care, or when instructed by Support</p>
     <ul data-role="tabs" data-expand="true">
+      <li><a href="#" onclick="flashToolBoard('blackboxx32');"><img src="/wizards/flashingtool2/img/bbx32-icon.png"> BlackBox X32</a></li>
       <li><a href="#" onclick="flashToolBoard('blackbox4x');"><img src="/wizards/flashingtool2/img/bb4x-icon.png"> BlackBox 4X</a></li>
-      <!-- li><a href="#" onclick="flashToolBoard('blackboxx32');"><img src="/wizards/flashingtool2/img/bbx32-icon.png"> BlackBox X32</a></li -->
       <li><a href="#" onclick="flashToolBoard('interfacev1');"><img src="/wizards/flashingtool2/img/interfacev1-icon.png"> Interface</a></li>
     </ul>
 
@@ -51,32 +54,43 @@ function openFlashingTool() {
       <div class="cell-md-9 mb-1">
         <select data-prepend="&nbsp;<i class='fas fa-cube'></i>" data-role="select" data-filter="false" id="interfaceFirmwareVer" data-editable="true">
           <option value="online">Latest available version</option>
-          <option value="custom">Custom: firmware binary file</option>
+          <option value="custom">Custom: firmware .BIN file</option>
         </select>
       </div>
     </div>
 
-    <div class="row" id="flash-tool-grbl-row">
+    <div class="row" id="flash-tool-grbl-row"   style="display: none;">
       <div class="cell-md-3 mb-1">Machine Style</div>
         <div class="cell-md-9 mb-1">
           <select data-prepend="&nbsp;<i class='fas fa-cube'></i>" data-role="select" data-filter="false" id="grblAxesCount" data-editable="true">
             <option value="3axes-grbl">3 Axes CNC/Laser: Dual-Y with XYZ Axis Homing</option>
             <option value="2axes-grbl">2 Axes CNC/Laser: Dual-Y with Z-Axis Homing Disabled</option>
             <option value="servo-grbl">2/3 Axes Plotter: Dual-Y with Servo Toolhead</option>
-            <option value="custom">Custom: firmware hex file</option>
+            <option value="custom">Custom: firmware .HEX file</option>
           </select>
         </div>
       </div>
     </div>
 
-    <div class="row" id="flash-tool-grblhal-row"  style="display: none;">
+    <div class="row" id="flash-tool-grblhal-row">
       <div class="cell-md-3 mb-1">Machine Style</div>
         <div class="cell-md-9 mb-1">
           <select data-prepend="&nbsp;<i class='fas fa-cube'></i>" data-role="select" data-filter="false" id="grblHalAxesCount" data-editable="true">
-            <option value="3axes-grblhal">3 Axes CNC/Laser: Dual-Y with XYZ Axis Homing</option>
-            <!-- option value="2axes-grblhal">2 Axes CNC/Laser: Dual-Y with Z-Axis Homing Disabled</option>
-            <option value="4axes-grblhal">4 Axes CNC/Laser: with XYZ Axis Homing</option -->
-            <option value="custom">Custom: firmware hex file</option>
+            <option value="3axes-grblhal">2/3 Axes CNC/Laser: Dual-Y</option>
+            <option value="3axes-grblhal-door">2/3 Axes CNC/Laser: Dual-Y with Door Switch</option>
+            <option value="4axes-grblhal">4 Axes CNC/Laser (Y2 Motor as A, Z Limit shared for A)</option>
+            <option value="custom">Custom: firmware .BIN file</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" id="flash-tool-erase-row" style="display: none;">
+      <div class="cell-md-3 mb-1">Erase Settings</div>
+        <div class="cell-md-9 mb-1">
+          <select data-prepend="&nbsp;<i class='fas fa-eraser'></i>" data-role="select" data-filter="false" id="flashErase" data-editable="true">
+            <option value="flashonly">Flash firmware, do not erase settings </option>
+            <option value="flasherase">Flash firmware and erase settings</option>
           </select>
         </div>
       </div>
@@ -119,20 +133,16 @@ function openFlashingTool() {
 
   $("#grblAxesCount").on("change", function() {
     if (this.value == "custom") {
-      $("#flash-tool-door-row").hide();
       $("#flash-tool-custom-row").show();
     } else {
-      $("#flash-tool-door-row").show();
       $("#flash-tool-custom-row").hide();
     }
   });
 
   $("#grblHalAxesCount").on("change", function() {
     if (this.value == "custom") {
-      $("#flash-tool-door-row").hide();
       $("#flash-tool-custom-row").show();
     } else {
-      $("#flash-tool-door-row").show();
       $("#flash-tool-custom-row").hide();
     }
   });
@@ -146,13 +156,14 @@ function openFlashingTool() {
   });
 
   setTimeout(function() {
-    var opts = `<option value="custom">Custom: firmware binary file</option>`;
+
+    var opts = `<option value="bundle">Bundled version</option>
+    <option value="custom">Custom: firmware binary file</option>`;
     if (parseFloat(laststatus.interface.firmware.availVersion) > 0) {
       opts += `<option value="online" selected>Latest available v` + laststatus.interface.firmware.availVersion + `</option>`;
+      var fwselect = $("#interfaceFirmwareVer").data("select");
+      fwselect.data(opts);
     }
-    var fwselect = $("#interfaceFirmwareVer").data("select");
-    fwselect.data(opts);
-
     populatePortsMenu();
 
   }, 200);
@@ -200,9 +211,11 @@ function flashFirmwarefromWizard() {
         var xhr = new XMLHttpRequest();
         xhr.onload = function() {
           if (xhr.status == 200) {
+            console.log(xhr.response);
             $("#customFirmwareSet").html(xhr.response);
             data.customImg = true;
-            data.file = $("#firmwareBin").val();
+            data.file = xhr.response;
+            console.log(data);
             socket.emit('flashGrbl', data);
           }
         };
@@ -226,16 +239,21 @@ function flashFirmwarefromWizard() {
 
     if ($("#grblHalAxesCount").val() == "3axes-grblhal") {
       var filename = "grblhal-grbl3axis.bin";
-    } else if ($("#grblAxesCount").val() == "2axes-grblhal") {
-      var filename = "";
-    } else if ($("#grblAxesCount").val() == "4axes-grblhal") {
-      var filename = "";
+    } else if ($("#grblHalAxesCount").val() == "3axes-grblhal-door") {
+      var filename = "grblhal-grbl3axis-door.bin";
+    } else if ($("#grblHalAxesCount").val() == "4axes-grblhal") {
+      var filename = "grblhal-grbl4axis.bin";
     }
 
     var data = {
       port: $("#portUSB2").val(),
       file: filename,
+      erase: false,
       customImg: false
+    }
+
+    if ($("#flashErase").val() == "flasherase") {
+      data.erase = true;
     }
 
     if ($("#grblHalAxesCount").val() == "custom") {

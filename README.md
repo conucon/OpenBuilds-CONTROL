@@ -15,10 +15,3 @@ Click to see all past releases:  [![Downloads](https://img.shields.io/github/dow
 [![Build/release](https://github.com/OpenBuilds/OpenBuilds-CONTROL/actions/workflows/build.yml/badge.svg)](https://github.com/OpenBuilds/OpenBuilds-CONTROL/actions/workflows/build.yml)
 
 ![Screenshot](https://raw.githubusercontent.com/OpenBuilds/OpenBuilds-CONTROL/master/docs/control.PNG)
-
-# Build:
-```
-npm i
-npm run start   // starts electron
-npm run build   // creates exe
-```

@@ -1,14 +1,14 @@
-
 // Toolbar with USB port/connect/disconnect
 function setConnectBar(val, status) {
   if (val == 0) { // Not Connected Yet
     // Status Badge
-    $('#connectStatus').html(tr["portConnected"]);
+    $('#connectStatus').html(tr("Port: Not Connected"));
     // Connect/Disconnect Button
     $("#disconnectBtn").hide();
     $("#flashBtn").hide();
     $('#portUSB').parent().show();
     $("#connectBtn").show();
+    $("#scanBtn").show();
     $("#driverBtn").show();
     if ($('#portUSB').val() != "") {
       $("#connectBtn").attr('disabled', false);
@@ -24,9 +24,10 @@ function setConnectBar(val, status) {
 
   } else if (val == 1 || val == 2) { // Connected, but not Playing yet
     // Status Badge
-    $('#connectStatus').html(tr["portConnected"]);
+    $('#connectStatus').html("Port: Connected");
     // Connect/Disconnect Button
     $("#connectBtn").hide();
+    $("#scanBtn").hide();
     $("#driverBtn").hide();
     $('#portUSB').parent().hide();
     $("#connectBtn").attr('disabled', false);
@@ -44,9 +45,10 @@ function setConnectBar(val, status) {
 
   } else if (val == 3) { // Busy Streaming GCODE
     // Status Badge
-    $('#connectStatus').html(tr["portConnected"]);
+    $('#connectStatus').html("Port: Connected");
     // Connect/Disconnect Button
     $("#connectBtn").hide();
+    $("#scanBtn").hide();
     $("#driverBtn").hide();
     $('#portUSB').parent().hide();
     $("#connectBtn").attr('disabled', false);
@@ -63,9 +65,10 @@ function setConnectBar(val, status) {
 
   } else if (val == 4) { // Paused
     // Status Badge
-    $('#connectStatus').html(tr["portConnected"]);
+    $('#connectStatus').html("Port: Connected");
     // Connect/Disconnect Button
     $("#connectBtn").hide();
+    $("#scanBtn").hide();
     $("#driverBtn").hide();
     $('#portUSB').parent().hide();
     $("#connectBtn").attr('disabled', false);
@@ -82,9 +85,10 @@ function setConnectBar(val, status) {
 
   } else if (val == 5) { // Alarm State
     // Status Badge
-    $('#connectStatus').html(tr["portConnected"]);
+    $('#connectStatus').html("Port: Connected");
     // Connect/Disconnect Button
     $("#connectBtn").hide();
+    $("#scanBtn").hide();
     $("#driverBtn").hide();
     $('#portUSB').parent().hide();
     $("#connectBtn").attr('disabled', false);
@@ -103,6 +107,7 @@ function setConnectBar(val, status) {
     $('#connectStatus').html("Port: Flashing");
     // Connect/Disconnect Button
     $("#connectBtn").hide();
+    $("#scanBtn").hide();
     $("#driverBtn").hide();
     $('#portUSB').parent().hide();
     $("#connectBtn").attr('disabled', false);

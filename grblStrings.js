@@ -36,7 +36,8 @@ var grblErrorCodes = {
   34: "A G2 or G3 arc, traced with the radius definition, had a mathematical error when computing the arc geometry. Try either breaking up the arc into semi-circles or quadrants, or redefine them with the arc offset definition.",
   35: "A G2 or G3 arc, traced with the offset definition, is missing the IJK offset word in the selected plane to trace the arc.",
   36: "There are unused, leftover G-code words that aren't used by any command in the block.",
-  37: "The G43.1 dynamic tool length offset command cannot apply an offset to an axis other than its configured axis. The Grbl default axis is the Z-axis."
+  37: "The G43.1 dynamic tool length offset command cannot apply an offset to an axis other than its configured axis. The Grbl default axis is the Z-axis.",
+  46: "Home machine to continue"
 };
 
 var grblAlarmCodes = {
@@ -49,7 +50,15 @@ var grblAlarmCodes = {
   6: "Homing fail. Reset during active homing cycle.",
   7: "Homing fail. Safety door was opened during active homing cycle.",
   8: "Homing fail. Cycle failed to clear limit switch when pulling off. Try increasing pull-off setting or check wiring.",
-  9: "Homing fail. Could not find limit switch within search distance. Defined as 1.5 * max_travel on search and 5 * pulloff on locate phases."
+  9: "Homing fail. Could not find limit switch within search distance. Defined as 1.5 * max_travel on search and 5 * pulloff on locate phases.",
+  10: "EStop asserted. Clear and reset",
+  11: "Homing required. Execute homing command ($H) to continue.",
+  12: "Limit switch engaged. Clear before continuing.",
+  13: "Probe protection triggered. Clear before continuing.",
+  14: "Spindle at speed timeout. Clear before continuing.",
+  15: "Homing fail. Could not find second limit switch for auto squared axis within search distances. Try increasing max travel, decreasing pull-off distance, or check wiring.",
+  16: "Power on selftest (POS) failed.",
+  17: "Motor fault."
 };
 
 var grblSettingCodes = {
@@ -133,7 +142,25 @@ var grblSettingCodes = {
   307: "Websocket Port",
   73: "Wifi Mode", // Off/Station
   74: "SSID",
-  75: "PSK"
+  75: "PSK",
+  65: "Require homing sequence to be executed at startup",
+  8: "Ganged axes direction invert as bitfield",
+  9: "PWM Spindle as bitfield where setting bit 0 enables the rest",
+  320: "Hostname, max: 64",
+  322: "IP Address",
+  323: "Gateway",
+  324: "Netmask",
+  325: "Telnet port",
+  326: "HTTP port",
+  327: "Websocket port",
+  346: "Restore position after M6 as boolean",
+  396: "WebUI timeout in minutes",
+  397: "WebUI auto report interval in milliseconds",
+  398: "Planner buffer blocks",
+  481: "Autoreport interval in ms",
+  376: "Rotational axes as bitfield",
+
+
 };
 
 exports.errors = function(id) {

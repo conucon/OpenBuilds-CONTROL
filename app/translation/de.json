@@ -3,5 +3,6 @@
   "mmMode": "mm-Mode",
   "runSimBtn" : "Simulieren",
   "notConnected" : "Nicht Verbunden",
-  "doorSensor" : "Tür Sensor"
+  "doorSensor" : "Tür Sensor",
+  "powerSettings": "Leistungseinstellungen"
 }
