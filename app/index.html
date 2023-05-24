@@ -18,6 +18,18 @@
   </head>
 
   <body>
+
+    <div class="pos-fixed pos-center" id="splash">
+      <center>
+        <div id="openbuildslogosplash" style="display: none;">
+          <img src="/img/conucon_png_2.png" onload="$('#openbuildslogosplash').fadeIn(800); setTimeout(function() { $('#splash').fadeOut(400); }, 2000)" width="200" />
+          <p>
+            <h1>OpenBuilds&reg;&nbsp;CONTROL</h1>
+        </div>
+      </center>
+    </div>
+
+
     <div class="window" style="height: 100vh; overflow-y: hidden;">
       <div id="windowtitlebar" class="window-caption bg-openbuilds" style="-webkit-app-region: drag;">
         <!-- <span class="icon mif-cog"></span> -->
