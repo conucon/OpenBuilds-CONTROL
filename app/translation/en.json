@@ -1,5 +1,6 @@
 {
   "portConnected": "Port: Connected",
+  "controlTab": "Control",
   "mmMode": "mm-mode",
   "runSimBtn" : "simulate",
   "notConnected" : "Port: Not Connected",

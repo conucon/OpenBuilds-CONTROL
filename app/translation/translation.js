@@ -93,7 +93,7 @@ Promise.all([loadLanguageSettings()])
               });
               languageOption.classList.add('selected');
               langData = language;
-              translateElements(language);
+              translateElements(language.data);
             });
 
             cardContent.appendChild(languageOption);

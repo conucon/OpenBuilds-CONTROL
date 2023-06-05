@@ -333,18 +333,18 @@ function checkPowerSettings() {
           usbselective = (stdout.slice(stdout.search("USB selective suspend setting") - 1)).split("\n")
           usbselective.length = 7;
 
-          if (usbselective[5].indexOf("0x00000000") != -1) {
+          if (usbselective[5]?.indexOf("0x00000000") != -1) {
             debug_log("USB Selective Suspend DISABLED on AC power ")
             status.driver.powersettings.usbselectiveAC = false;
-          } else if (usbselective[5].indexOf("0x00000001") != -1) {
+          } else if (usbselective[5]?.indexOf("0x00000001") != -1) {
             debug_log("USB Selective Suspend ENABLED on AC power ")
             status.driver.powersettings.usbselectiveAC = true;
           }
 
-          if (usbselective[6].indexOf("0x00000000") != -1) {
+          if (usbselective[6]?.indexOf("0x00000000") != -1) {
             debug_log("USB Selective Suspend DISABLED on DC power ")
             status.driver.powersettings.usbselectiveDC = false;
-          } else if (usbselective[6].indexOf("0x00000001") != -1) {
+          } else if (usbselective[6]?.indexOf("0x00000001") != -1) {
             debug_log("USB Selective Suspend ENABLED on DC power ")
             status.driver.powersettings.usbselectiveDC = true;
           }
