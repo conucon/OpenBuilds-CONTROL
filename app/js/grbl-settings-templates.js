@@ -1,7 +1,7 @@
 var grblSettingsTemplate2 = {
   0: {
     key: `$0`,
-    title: `Step pulse time, microseconds`,
+    title: `Step pulse time, microseconds`,id: "title_test",
     description: `Stepper drivers are rated for a certain minimum step pulse length. Check the data sheet or just try some numbers. You want the shortest pulses the stepper drivers can reliably recognize. If the pulses are too long, you might run into trouble when running the system at very high feed and pulse rates, because the step pulses can begin to overlap each other. We recommend something around 10 microseconds, which is the default value`,
     template: `<input id="val-0-input" data-role="input" data-clear-button="false" data-append="&micro;s" type="text">`,
     utils: ``

@@ -7,10 +7,12 @@
   "notConnected" : "Nicht Verbunden",
   "doorSensor" : "Tür Sensor",
   "powerSettings": "Leistungseinstellungen",
-  "saveBtn" : "Firmware<br>speichern",
+  "connectStateNotConnected" : "Nicht verbunden",
+  "saveBtn" : "Firmware speichern",
   "connectBtn" : "Verbinden",
   "disconnectBtn" : "Verbindung trennen",
   "flashBtn" : "Flashing: Bitte warten … ",
   "grblButtons" : "Grbl Neustart",
-  "openGcodeBtn" : "G-CODE öffnen"
+  "openGcodeBtn" : "G-CODE öffnen",
+  "grblSettingsTemplate2.0.title": "Schrittpulsdauer, Microsekunden"
 }

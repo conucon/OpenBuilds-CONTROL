@@ -1,10 +1,18 @@
 {
-  "portConnected": "Port: Connected",
+  "windowtitle": "OpenBuilds CONTROL",
   "controlTab": "Control",
+  "portConnected": "Port: Connected",
   "mmMode": "mm-mode",
   "runSimBtn" : "simulate",
   "notConnected" : "Port: Not Connected",
-  "connectStateNotConnected" : "Not Connected",
   "doorSensor" : "Door Sensor",
-  "powerSettings": "Power Settings"
+  "powerSettings": "Power Settings",
+  "connectStateNotConnected" : "Not Connected",
+  "saveBtn" : "Save to Firmware",
+  "connectBtn" : "Connect",
+  "disconnectBtn" : "Disconnect",
+  "flashBtn" : "Flashing: please wait...",
+  "grblButtons" : "Restart Grbl",
+  "openGcodeBtn" : "Open<br>G-CODE",
+  "grblSettingsTemplate2.0.title": "Step pulse time, microseconds"
 }
