@@ -1791,4 +1791,4 @@ var grblSettingsTemplateDE = {
 }
 var grblSettingsLanguages = {"English" : grblSettingsTemplateEN, "German": grblSettingsTemplateDE}
 
-var grblSettingsTranslated = grblSettingsLanguages["English"];
+var grblSettingsTranslated = grblSettingsLanguages["German"];
