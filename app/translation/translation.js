@@ -86,13 +86,15 @@ Promise.all([loadLanguageSettings()])
             }
             
             languageOption.addEventListener('click', () => {
-
+            
               // Change the selected language and update the translation
               cardContent.querySelectorAll('.language-option').forEach((option) => {
                 option.classList.remove('selected');
               });
               languageOption.classList.add('selected');
               langData = language;
+              console.log(langData)
+              grblSettingsTranslated = grblSettingsLanguages[langData.name];
               translateElements(language.data);
             });
 

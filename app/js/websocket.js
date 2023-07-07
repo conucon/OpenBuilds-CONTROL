@@ -264,8 +264,8 @@ function initSocket() {
       if (typeof grblSettings !== 'undefined') {
         grblSettings(data.response)
         var key = data.response.split('=')[0].substr(1);
-        if (grblSettingsTemplate2[key] !== undefined) {
-          var descr = grblSettingsTemplate2[key].title
+        if (grblSettingsTranslated[key] !== undefined) {
+          var descr = grblSettingsTranslated[key].title
         } else {
           var descr = "unknown"
         }

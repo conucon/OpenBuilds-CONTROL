@@ -8,11 +8,11 @@
   "doorSensor" : "Door Sensor",
   "powerSettings": "Power Settings",
   "connectStateNotConnected" : "Not Connected",
-  "saveBtn" : "Save to Firmware",
+  "saveBtn" : "Save to firmware",
   "connectBtn" : "Connect",
   "disconnectBtn" : "Disconnect",
   "flashBtn" : "Flashing: please wait...",
   "grblButtons" : "Restart Grbl",
-  "openGcodeBtn" : "Open<br>G-CODE",
+  "openGcodeBtn" : "Open G-CODE",
   "grblSettingsTemplate2.0.title": "Step pulse time, microseconds"
 }

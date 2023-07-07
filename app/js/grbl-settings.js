@@ -45,8 +45,8 @@ function backupGrblSettings() {
   for (key in grblParams) {
     var key2 = key.split('=')[0].substr(1);
 
-    if (grblSettingsTemplate2[key2] !== undefined) {
-      var descr = grblSettingsTemplate2[key2].title
+    if (grblSettingsTranslated[key2] !== undefined) {
+      var descr = grblSettingsTranslated[key2].title
     } else {
       var descr = "unknown"
     }
@@ -223,13 +223,13 @@ function grblPopulate() {
     for (key in grblParams) {
       var key2 = key.split('=')[0].substr(1);
       //console.log(key2)
-      if (grblSettingsTemplate2[key2] !== undefined) {
+      if (grblSettingsTranslated[key2] !== undefined) {
         //template += grblSettingsTemplate2[key2].template;
-        template += `<tr id="grblSettingsRow` + key2 + `" title="` + grblSettingsTemplate2[key2].description + `">
-           <td>` + grblSettingsTemplate2[key2].key + `</td>
-           <td>` + grblSettingsTemplate2[key2].title + `</td>
-           <td>` + grblSettingsTemplate2[key2].template + `</td>
-           <td>` + grblSettingsTemplate2[key2].utils + `</td>
+        template += `<tr id="grblSettingsRow` + key2 + `" title="` + grblSettingsTranslated[key2].description + `">
+           <td>` + grblSettingsTranslated[key2].key + `</td>
+           <td>` + grblSettingsTranslated[key2].title + `</td>
+           <td>` + grblSettingsTranslated[key2].template + `</td>
+           <td>` + grblSettingsTranslated[key2].utils + `</td>
         </tr>`
       } else {
         template += `
@@ -487,8 +487,8 @@ function grblSaveSettings() {
       //console.log(counter, toSaveCommands[counter]);
       var newParam = toSaveCommands[counter].split("=")[0];
       var newParamKey = newParam.substr(1);
-      if (grblSettingsTemplate2[newParamKey] !== undefined) {
-        var newParamName = grblSettingsTemplate2[newParamKey].title
+      if (grblSettingsTranslated[newParamKey] !== undefined) {
+        var newParamName = grblSettingsTranslated[newParamKey].title
       } else {
         var newParamName = "unknown"
       }
