@@ -1,9 +1,9 @@
 
 var grblSettingsTemplateEN = {
-  0: {
+ 0: {
     key: `$0`,
     title: `Step pulse time, microseconds`,
-    description: `Stepper drivers are rated for a certain minimum step pulse length. Check the data sheet or just try some numbers. You want the shortest pulses the stepper drivers can reliably recognize. If the pulses are too long, you might run into trouble when running the system at very high feed and pulse rates, because the step pulses can begin to overlap each other. We recommend something around 10 microseconds, which is the default value`,
+    description: `Stepper are rated for a certain minimum step pulse length. Check the data sheet or just try some numbers. You want the shortest pulses the stepper drivers can reliably recognize. If the pulses are too long, you might run into trouble when running the system at very high feed and pulse rates, because the step pulses can begin to overlap each other. We recommend something around 10 microseconds, which is the default value`,
     template: `<input id="val-0-input" data-role="input" data-clear-button="false" data-append="&micro;s" type="text">`,
     utils: ``
   },
@@ -897,22 +897,22 @@ var grblSettingsTemplateEN = {
 
 var grblSettingsTemplateDE = {
   0: {
-    key: `$0`,
-    title: `Step pulse time, microseconds`,
-    description: `Stepper TREIBER are rated for a certain minimum step pulse length. Check the data sheet or just try some numbers. You want the shortest pulses the stepper drivers can reliably recognize. If the pulses are too long, you might run into trouble when running the system at very high feed and pulse rates, because the step pulses can begin to overlap each other. We recommend something around 10 microseconds, which is the default value`,
+     key: `$0`,
+    title: `Schrittimpulsdauer, Mikrosekunden`,
+    description: `Schritttreiber sind für eine bestimmte Mindestschrittimpulslängen ausgelegt. Probieren Sie unterschiedliche Werte aus. Ideal ist ein möglichst kurzer Impuls, der von den Schrittmotortreibern zuverlässig erkannt wird. Wenn die Impulse zu lang sind, kann es beim Betrieb des Systems mit sehr hohen Vorschubraten zu Problemen kommen, da die Schrittimpulse beginnen können, sich zu überlappen. Wir empfehlen einen Wert von etwa 10 Mikrosekunden, was dem Standardwert entspricht`,
     template: `<input id="val-0-input" data-role="input" data-clear-button="false" data-append="&micro;s" type="text">`,
     utils: ``
   },
   1: {
     key: `$1`,
-    title: `Step idle delay, milliseconds`,
-    description: `Every time your steppers complete a motion and come to a stop, Grbl will delay disabling the steppers by this value. OR, you can always keep your axes enabled (powered so as to hold position) by setting this value to the maximum 255 milliseconds. Again, just to repeat, you can keep all axes always enabled by setting $1=255. The stepper idle lock time is the time length Grbl will keep the steppers locked before disabling. Depending on the system, you can set this to zero and disable it. On others, you may need 25-50 milliseconds to make sure your axes come to a complete stop before disabling. This is to help account for machine motors that do not like to be left on for long periods of time without doing something. Also, keep in mind that some stepper drivers don't remember which micro step they stopped on, so when you re-enable, you may witness some 'lost' steps due to this. In this case, just keep your steppers enabled via $1=255`,
+    title: `Schritt Leerlaufverzögerung, Millisekundens`,
+    description: `Jedes Mal, wenn die Schrittmotoren eine Bewegung abschließen und zum Stillstand kommen, wird die Deaktivierung der Motoren um diesen Wert verzögert. ALTERNATIVE: Sie können Ihre Achsen immer aktiviert lassen (mit Strom versorgen, um die Position zu halten), indem Sie diesen Wert auf den Maximalwert von 255 Millisekunden einstellen. Um es noch einmal zu wiederholen: Sie können alle Achsen immer aktiviert lassen, indem Sie $1=255 festlegen.`,
     template: `<input id="val-1-input" data-role="input" data-clear-button="false" data-append="ms" type="text">`,
     utils: ``
   },
   2: {
     key: `$2`,
-    title: `Step pulse invert, mask`,
+    title: `Schritt Port invertieren, maskieren`,
     description: `This setting inverts the step pulse signal. By default, a step signal starts at normal-low and goes high upon a step pulse event. After a step pulse time set by $0, the pin resets to low, until the next step pulse event. When inverted, the step pulse behavior switches from normal-high, to low during the pulse, and back to high. Most users will not need to use this setting, but this can be useful for certain CNC-stepper drivers that have peculiar requirements. For example, an artificial delay between the direction pin and step pulse can be created by inverting the step pin.`,
     template: `<input id="val-2-input" data-role="input" data-clear-button="false" data-append="mask" type="text">`,
     utils: ``
