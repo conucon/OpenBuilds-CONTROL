@@ -1,6 +1,7 @@
 {
   "windowtitle": "OpenBuilds CONTROL",
   "controlTab": "Control",
+  "grblTab": "GRBL Settings",
   "portConnected": "Port: Connected",
   "mmMode": "mm-mode",
   "runSimBtn" : "simulate",
@@ -14,5 +15,6 @@
   "flashBtn" : "Flashing: please wait...",
   "grblButtons" : "Restart Grbl",
   "openGcodeBtn" : "Open G-CODE",
-  "grblSettingsTemplate2.0.title": "Step pulse time, microseconds"
+  "troubleshootingTab":"Troubleshooting",
+  "CONUCON_BackupSettings": "Backup Settings"
 }

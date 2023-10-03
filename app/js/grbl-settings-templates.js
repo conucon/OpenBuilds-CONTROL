@@ -905,7 +905,7 @@ var grblSettingsTemplateDE = {
   },
   1: {
     key: `$1`,
-    title: `Schritt Leerlaufverzögerung, Millisekundens`,
+    title: `Schritt Leerlaufverzögerung, Millisekunden`,
     description: `Jedes Mal, wenn die Schrittmotoren eine Bewegung abschließen und zum Stillstand kommen, wird die Deaktivierung der Motoren um diesen Wert verzögert. ALTERNATIVE: Sie können Ihre Achsen immer aktiviert lassen (mit Strom versorgen, um die Position zu halten), indem Sie diesen Wert auf den Maximalwert von 255 Millisekunden einstellen. Um es noch einmal zu wiederholen: Sie können alle Achsen immer aktiviert lassen, indem Sie $1=255 festlegen.`,
     template: `<input id="val-1-input" data-role="input" data-clear-button="false" data-append="ms" type="text">`,
     utils: ``
