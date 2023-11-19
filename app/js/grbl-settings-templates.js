@@ -905,22 +905,23 @@ var grblSettingsTemplateDE = {
   },
   1: {
     key: `$1`,
-    title: `Schritt Leerlaufverzögerung, Millisekunden`,
+    title: `Leerlaufverzögerung, Millisekunden
+    `,
     description: `Jedes Mal, wenn die Schrittmotoren eine Bewegung abschließen und zum Stillstand kommen, wird die Deaktivierung der Motoren um diesen Wert verzögert. ALTERNATIVE: Sie können Ihre Achsen immer aktiviert lassen (mit Strom versorgen, um die Position zu halten), indem Sie diesen Wert auf den Maximalwert von 255 Millisekunden einstellen. Um es noch einmal zu wiederholen: Sie können alle Achsen immer aktiviert lassen, indem Sie $1=255 festlegen.`,
     template: `<input id="val-1-input" data-role="input" data-clear-button="false" data-append="ms" type="text">`,
     utils: ``
   },
   2: {
     key: `$2`,
-    title: `Schritt Port invertieren, maskieren`,
-    description: `This setting inverts the step pulse signal. By default, a step signal starts at normal-low and goes high upon a step pulse event. After a step pulse time set by $0, the pin resets to low, until the next step pulse event. When inverted, the step pulse behavior switches from normal-high, to low during the pulse, and back to high. Most users will not need to use this setting, but this can be useful for certain CNC-stepper drivers that have peculiar requirements. For example, an artificial delay between the direction pin and step pulse can be created by inverting the step pin.`,
+    title: `Schrittimpulssignal invertieren, mask`,
+    description: `Diese Einstellung invertiert das Schrittimpulssignal. Standardmäßig beginnt ein Schrittsignal bei LOW und geht bei einem Schrittimpulsereignis auf HIGH. Nach einer durch $0 festgelegten Schrittimpulszeit wird der Pin bis zum nächsten Schrittimpulssignal auf LOW zurückgesetzt. Bei der Umkehrung wechselt das Schrittimpulsverhalten von HIGH auf LOW während des Impulses und wieder zurück auf HIGH. Die meisten Anwender brauchen diese Einstellung nicht verwenden. Sie kann jedoch für bestimmte CNC-Schrittmotortreiber nützlich sein, die besondere Anforderungen haben.`,
     template: `<input id="val-2-input" data-role="input" data-clear-button="false" data-append="mask" type="text">`,
     utils: ``
   },
   3: {
     key: `$3`,
-    title: `Step direction invert, mask`,
-    description: `This setting inverts the direction signal for each axis. By default, Grbl assumes that the axes move in a positive direction when the direction pin signal is low, and a negative direction when the pin is high. Often, axes don't move this way with some machines. This setting will invert the direction pin signal for those axes that move the opposite way.`,
+    title: `Drehrrichtung invertieren, mask`,
+    description: `Diese Einstellung invertiert das Richtungssignal für jede Achse. Standardmäßig geht Grbl davon aus, dass sich die Achsen in die positive Richtung bewegen, wenn das Richtungs-Pin-Signal LOW ist, und in eine negative Richtung, wenn der Pin HIGH ist. Bei manchen Maschinen bewegen sich die Achsen oft nicht auf diese Weise. Durch die Invertierung der jeweiligen Achse, dreht der Motor in die entgegengesetzte Richtung.`,
     template: `<input  id="val-3-input" readonly type="hidden" />
        <table style="width: 100%;">
          <tr>
@@ -934,7 +935,7 @@ var grblSettingsTemplateDE = {
                <div>app-notification</div>
              </label>
            </td>
-           <td><span class="text-small">Reversed</span>
+           <td><span class="text-small">Invertiert</span>
            </td>
          </tr>
           <tr>
@@ -948,7 +949,7 @@ var grblSettingsTemplateDE = {
                <div>app-notification</div>
              </label>
            </td>
-           <td><span class="text-small">Reversed</span>
+           <td><span class="text-small">Invertiert</span>
            </td>
          </tr>
          <tr>
@@ -962,7 +963,7 @@ var grblSettingsTemplateDE = {
                <div>app-notification</div>
              </label>
            </td>
-           <td><span class="text-small">Reversed</span>
+           <td><span class="text-small">Invertiert</span>
            </td>
          </tr>
        </table>`,
@@ -970,40 +971,41 @@ var grblSettingsTemplateDE = {
   },
   4: {
     key: `$4`,
-    title: `Invert step enable pin, boolean`,
-    description: `If you have an xPro 2/3 or BlackBox 4X, set it to 1. for BlackBox X32 set to 0. By default, the stepper enable pin is high to disable and low to enable. If your setup needs the opposite, just invert the stepper enable pin by typing $4=1. Disable with $4=0. (May need a power cycle to load the change.)`,
+    title: `Enable Signal invertieren, boolean`,
+    description: `Für die BlackBox X32 oder die CONUCON-Vanilla ist 0 die korrekte Einstellung. Standardmäßig ist der Stepper-Aktivierungspin (Enable) HIGH zum Deaktivieren und LOW zum Aktivieren. Wenn Ihr Setup das Gegenteil erfordert, kehren Sie einfach den Stepper-Aktivierungspin um, indem Sie $4=1 eingeben. Deaktivieren mit $4=0. (Möglicherweise ist ein Aus- und Wiedereinschalten erforderlich, um die Änderung zu laden.)`,
     template: `<input id="val-4-input" data-role="input" data-clear-button="false"  data-append="mask/bool" type="text">`,
     utils: ``
   },
   5: {
     key: `$5`,
-    title: `Invert limit pins, boolean/mask`,
-    description: `By default, the limit pins are held normally-high with the Arduino's internal pull-up resistor. When a limit pin is low, Grbl interprets this as triggered. For the opposite behavior, just invert the limit pins by typing $5=1. Disable with $5=0. You may need a power cycle to load the change. NOTE: For more advanced usage, the internal pull-up resistor on the limit pins may be disabled in config.h.`,
+    title: `Endschalter Signal invertieren, boolean/mask`,
+    description: `Standardmäßig werden die Endschaltereingänge mit dem internen Pull-Up auf HIGH gehalten. Wenn der Endschaltereingang LOW ist, wird dies als Schaltsignal interpretiert. Für das umgekehrte Verhalten kehren Sie einfach die Limit-Pins um, indem Sie $5=1 eingeben. Deaktivieren mit $5=0. Möglicherweise müssen Sie das Gerät aus- und wieder einschalten, um die Änderung zu laden.`,
     template: `<input  id="val-5-input" data-role="input" data-clear-button="false"  data-append="mask/bool" type="text">`,
     utils: ``
   },
   6: {
     key: `$6`,
-    title: `Invert probe pin, boolean`,
-    description: `By default, the probe pin is held normally-high with the Arduino's internal pull-up resistor. When the probe pin is low, Grbl interprets this as triggered. For the opposite behavior, just invert the probe pin by typing $6=1. Disable with $6=0. You may need a power cycle to load the change.`,
+    title: `Probe Signal invertieren, boolean`,
+    description: `Standardmäßig wird der Probe-Eingang mit dem internen Pull-up-Widerstand auf HIGH gehalten. Wenn der Probe-Eingang LOW ist, interpretiert Grbl dies als ausgelöst. Für das umgekehrte Verhalten kehren Sie einfach den Probe-Eingang um, indem Sie $6=1 eingeben. Deaktivieren mit $6=0. Möglicherweise müssen Sie das Gerät aus- und wieder einschalten, um die Änderung zu laden.`,
     template: `<select id="val-6-input">
-             <option value="0">&#x2717; Disable</option>
-             <option value="1">&#x2713; Enable</option>
+             <option value="0">&#x2717; Aktiv</option>
+             <option value="1">&#x2713; Inaktiv</option>
           </select>`,
     utils: ``
   },
   10: {
     key: `$10`,
-    title: `Status report options, mask`,
-    description: `This setting determines what Grbl real-time data it reports back to the user when a '?' status report is sent. This data includes current run state, real-time position, real-time feed rate, pin states, current override values, buffer states, and the g-code line number currently executing (if enabled through compile-time options).`,
+    title: `Optionen für Status Report, mask`,
+    description: `Diese Einstellung bestimmt, welche Grbl-Echtzeitdaten dem Benutzer gemeldet werden, wenn ein „?“ zur Abfrage des Statusberichts geschickt wird. Zu diesen Daten gehören der aktuelle Laufstatus, die Echtzeitposition, die Echtzeit-Vorschubgeschwindigkeit, Pin-Zustände, aktuelle Override-Werte, Pufferzustände und die aktuell ausgeführte G-Code-Zeilennummer (sofern über Optionen zur in der Kompilierung aktiviert wurde).`,
     template: `<input id="val-10-input" data-role="input" data-clear-button="false" data-append="mask" type="text">`,
     utils: ``
   },
   11: {
     key: `$11`,
-    title: `Junction deviation, millimeters`,
-    description: `Junction deviation is used by the acceleration manager to determine how fast it can move through line segment junctions of a G-code program path. For example, if the G-code path has a sharp 10 degree turn coming up and the machine is moving at full speed, this setting helps determine how much the machine needs to slow down to safely go through the corner without losing steps`,
-    template: `<input id="val-11-input" data-role="input" data-clear-button="false" data-append="mm" type="text">`,
+    title: `"Trägheit"', Wert zwischen 0 und 1. `,
+    description: `Die Trägheit wird zur Pfadplanung verwendet, um die Geschwindigekeit für eine Richtungsänderung zu berechnen. Der Standadwert ist 0.01. Wenn der G-Code-Pfad beispielsweise eine scharfe 10-Grad-Kurve aufweist und die Maschine sich mit voller Geschwindigkeit bewegt, wird mit dieser Einstellung bestimmt, wie stark die Geschwindigkeit reduziert werden muss, um sicher durch die Kurve bzw. um die Ecke zu fahren, ohne Schritte zu verlieren.
+    Die Berechnung ist etwas kompliziert. Allgemein führen höhere Werte zu einer schnelleren Bewegung durch Ecken und erhöhen gleichzeitig das Risiko, Schritte und Positionierung zu verlieren. Niedrigere Werte führen zu einer vorsichtigeren und langsameren Kurvenfahrt. Wenn Sie also auf Probleme stoßen, bei denen Ihre Maschine versucht, eine Kurve zu schnell zu nehmen, verringern Sie diesen Wert, damit sie beim Einfahren in Kurven langsamer wird. Wenn Sie möchten, dass sich Ihre Maschine schneller durch Kreuzungen bewegt, erhöhen Sie diesen Wert, um die Geschwindigkeit zu erhöhen. Neugierigen sei das Grbl Github Repository empfohlen, um mehr über den Kurvenalgorithmus von Grbl erfahren, der sowohl die Geschwindigkeit als auch den Kreuzungswinkel mit einer sehr einfachen, effizienten und robusten Methode berücksichtigt.`,
+    template: `<input id="val-11-input" data-role="input" data-clear-button="false" data-append="-" type="text">`,
     utils: ``
   },
   12: {
